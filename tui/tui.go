@@ -101,7 +101,7 @@ func quit(c *gocui.Gui, v *gocui.View) error {
 func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
 	_, err := gui.SetView(historyView, 0, 0, mX-1, mY-1)
-	t.histState.SetDimensions(mX-1, mY-1)
+	t.histState.SetDimensions(mY-2, mX-2)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err

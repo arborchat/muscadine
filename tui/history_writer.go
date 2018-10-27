@@ -13,7 +13,8 @@ type HistoryState struct {
 	// history represents chat messages in the order in which they were received.
 	// Index 0 holds the oldes messages, and the highest valid index holds the most
 	// recent.
-	History []*arbor.ChatMessage
+	History                   []*arbor.ChatMessage
+	renderWidth, renderHeight int
 }
 
 const (
@@ -29,11 +30,20 @@ func NewHistoryState() (*HistoryState, error) {
 	return h, nil
 }
 
+// lastNElems returns the final `n` elements of the provided slice.
+func lastNElems(slice []*arbor.ChatMessage, n int) []*arbor.ChatMessage {
+	if n >= len(slice) {
+		return slice
+	}
+	return slice[len(slice)-n : len(slice)]
+}
+
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.
 func (h *HistoryState) Render(target io.Writer) error {
-	for _, message := range h.History {
+	renderableHist := lastNElems(h.History, h.renderHeight)
+	for _, message := range renderableHist {
 		_, err := fmt.Fprintf(target, "%s: %s\n", message.Username, message.Content)
 		if err != nil {
 			return err
@@ -50,6 +60,7 @@ func (h *HistoryState) New(message *arbor.ChatMessage) error {
 
 // SetDimensions notifes the HistoryState that the renderable display area has changed
 // so that its next render can avoid rendering offscreen.
-func (h *HistoryState) SetDimensions(x, y int) {
-
+func (h *HistoryState) SetDimensions(height, width int) {
+	h.renderHeight = height
+	h.renderWidth = width
 }

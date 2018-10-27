@@ -24,6 +24,10 @@ func TestHistoryState(t *testing.T) {
 	if err != nil {
 		t.Error("Should have been able to construct HistoryState with valid params", err)
 	}
+	const iterations = 10
+	const height = 5
+	const width = 80
+	hist.SetDimensions(iterations, width)
 	b := new(bytes.Buffer)
 	err = hist.Render(b)
 	if err != nil {
@@ -32,7 +36,6 @@ func TestHistoryState(t *testing.T) {
 	if len(b.String()) > 0 {
 		t.Error("Wrote data when no messages to render")
 	}
-	const iterations = 10
 	for i := 1; i <= iterations; i++ {
 		hist.New(&testMsg)
 		b = new(bytes.Buffer)
@@ -48,8 +51,6 @@ func TestHistoryState(t *testing.T) {
 			t.Errorf("Have added %d copies of message, but render only displays %d", i, numFound)
 		}
 	}
-	const height = 5
-	const width = 80
 	hist.SetDimensions(height, width)
 	b = new(bytes.Buffer)
 	err = hist.Render(b)
