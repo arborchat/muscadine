@@ -47,3 +47,9 @@ func (h *HistoryState) New(message *arbor.ChatMessage) error {
 	h.History = append(h.History, message)
 	return nil
 }
+
+// SetDimensions notifes the HistoryState that the renderable display area has changed
+// so that its next render can avoid rendering offscreen.
+func (h *HistoryState) SetDimensions(x, y int) {
+
+}

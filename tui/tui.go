@@ -49,7 +49,7 @@ func (t *TUI) mainLoop() chan struct{} {
 		defer close(done)
 		defer t.Close()
 
-		t.SetManagerFunc(layout)
+		t.SetManagerFunc(t.layout)
 
 		if err := t.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
 			log.Println("Failed registering exit keystroke handler")
@@ -98,9 +98,10 @@ func quit(c *gocui.Gui, v *gocui.View) error {
 }
 
 // layout places views in the UI.
-func layout(gui *gocui.Gui) error {
+func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
 	_, err := gui.SetView(historyView, 0, 0, mX-1, mY-1)
+	t.histState.SetDimensions(mX-1, mY-1)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
