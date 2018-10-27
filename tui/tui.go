@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"log"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -13,20 +12,26 @@ const historyView = "history"
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
 	*gocui.Gui
-	done     chan struct{}
-	messages chan *arbor.ChatMessage
+	done      chan struct{}
+	messages  chan *arbor.ChatMessage
+	histState *HistoryState
 }
 
 // NewTUI creates a new terminal user interface.
 func NewTUI() (*TUI, error) {
 	gui, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
-		log.Println("Unable to create UI", err)
+		return nil, err
+	}
+	hs, err := NewHistoryState()
+	if err != nil {
+		return nil, err
 	}
 
 	t := &TUI{
-		Gui:      gui,
-		messages: make(chan *arbor.ChatMessage),
+		Gui:       gui,
+		messages:  make(chan *arbor.ChatMessage),
+		histState: hs,
 	}
 	t.done = t.mainLoop()
 
@@ -64,14 +69,18 @@ func (t *TUI) AwaitExit() {
 
 // update listens for new messages to display and redraws the screen.
 func (t *TUI) update() {
-	for u := range t.messages {
+	for message := range t.messages {
 		t.Update(func(g *gocui.Gui) error {
 			v, err := g.View(historyView)
 			if err != nil {
 				return err
 			}
-			fmt.Fprintf(v, "%s: %s\n", u.Username, u.Content)
-			return nil
+			err = t.histState.New(message)
+			if err != nil {
+				return err
+			}
+
+			return t.histState.Render(v)
 		})
 	}
 }

@@ -7,7 +7,7 @@ import (
 	"os"
 
 	arbor "github.com/arborchat/arbor-go"
-	"github.com/arborchat/client/tui"
+	"github.com/arborchat/muscadine/tui"
 )
 
 // UI is all of the operations that an Arbor client front-end needs to support
