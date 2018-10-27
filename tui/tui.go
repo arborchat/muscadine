@@ -80,6 +80,7 @@ func (t *TUI) update() {
 				return err
 			}
 
+			v.Clear()
 			return t.histState.Render(v)
 		})
 	}
