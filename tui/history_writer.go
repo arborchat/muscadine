@@ -38,6 +38,21 @@ func lastNElems(slice []*arbor.ChatMessage, n int) []*arbor.ChatMessage {
 	return slice[len(slice)-n : len(slice)]
 }
 
+// RenderMessage creates a text format of a message that wraps its contents to fit
+// within the provided width. If a user "foo" sent a long message, the result should
+// look like:
+//
+//`foo: jsdkfljsdfkljsfkljsdkfj
+//      jskfldjfkdjsflsdkfjsldf
+//      jksdfljskdfjslkfjsldkfj`
+//
+// The important thing to note is that lines are broken at the same place and that
+// subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
+// as a byte slice.
+func RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
+	return nil
+}
+
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.

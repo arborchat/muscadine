@@ -7,6 +7,7 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/tui"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 var testMsg arbor.ChatMessage = arbor.ChatMessage{
@@ -60,5 +61,54 @@ func TestHistoryState(t *testing.T) {
 	numFound := strings.Count(b.String(), testMsg.Content)
 	if numFound > height {
 		t.Errorf("With height=%d, Render should only display %d messages, got %d", height, height, numFound)
+	}
+}
+
+// TestRenderMessage ensures that the rendering function correctly handles line wrapping
+// and related problems when preparing messages to be displayed.
+func TestRenderMessage(t *testing.T) {
+	message := testMsg
+	message.Content = "let's use a ลาญฤๅเข่นฆ่าบีฑ much longer string いろはにほへとちりぬるを so that line wrapping アサキユメミシhappens"
+	separator := ": "
+	usernameWidth := runewidth.StringWidth(message.Username)
+	separatorWidth := runewidth.StringWidth(separator)
+	contentWidth := runewidth.StringWidth(message.Content)
+	prefix := message.Username + separator
+	prefixWidth := runewidth.StringWidth(prefix)
+	startingWidth := usernameWidth + contentWidth + separatorWidth
+	// test that it all fits on one line given sufficient space
+	rendered := tui.RenderMessage(&message, startingWidth)
+	if rendered == nil {
+		t.Fatal("Render produced nil output for 1 line message")
+	}
+	if len(rendered) < 1 || len(rendered) > 1 {
+		t.Errorf("Expected rendered message of %d lines, got %d", 1, len(rendered))
+	}
+	if string(rendered[0][:len(prefix)]) != prefix {
+		t.Errorf("Expected prefix \"%s\", got \"%s\"", prefix, rendered[0][:len(prefix)])
+	}
+	// test every message width between a single line and having no space for message
+	// content to be displayed
+	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i++ {
+		collect := ""
+		rendered := tui.RenderMessage(&message, i)
+		if rendered == nil {
+			t.Fatalf("Render produced nil for %d width message", i)
+		}
+		for index, line := range rendered {
+			if index == 0 {
+				if string(line[:len(prefix)]) != prefix {
+					t.Errorf("Expected prefix \"%s\" on line %d, got \"%s\"", prefix, index, line)
+				}
+			} else {
+				if string(line[:len(prefix)]) != strings.Repeat(" ", prefixWidth) {
+					t.Errorf("Expected line %d to start with %d spaces, found \"%s\"", index, prefixWidth, line)
+				}
+			}
+			collect += string(line[len(prefix):])
+		}
+		if collect != message.Content {
+			t.Errorf("Expected line contents to be \"%s\", found \"%s\"", message.Content, collect)
+		}
 	}
 }
