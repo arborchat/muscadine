@@ -1,10 +1,11 @@
 package tui
 
 import (
-	"fmt"
 	"io"
+	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 // HistoryState maintains the state of what is visible in the client and
@@ -30,8 +31,16 @@ func NewHistoryState() (*HistoryState, error) {
 	return h, nil
 }
 
-// lastNElems returns the final `n` elements of the provided slice.
+// lastNElems returns the final `n` elements of the provided slice of messages
 func lastNElems(slice []*arbor.ChatMessage, n int) []*arbor.ChatMessage {
+	if n >= len(slice) {
+		return slice
+	}
+	return slice[len(slice)-n : len(slice)]
+}
+
+// lastNElems returns the final `n` elements of the provided slice of messages
+func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 	if n >= len(slice) {
 		return slice
 	}
@@ -50,16 +59,44 @@ func lastNElems(slice []*arbor.ChatMessage, n int) []*arbor.ChatMessage {
 // subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
 // as a byte slice.
 func RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
-	return nil
+	const separator = ": "
+	usernameWidth := runewidth.StringWidth(message.Username)
+	separatorWidth := runewidth.StringWidth(separator)
+	firstLinePrefix := message.Username + separator
+	otherLinePrefix := strings.Repeat(" ", usernameWidth+separatorWidth)
+	messageRenderWidth := width - (usernameWidth + separatorWidth)
+	outputLines := make([][]byte, 1)
+	wrapped := runewidth.Wrap(message.Content, messageRenderWidth)
+	wrappedLines := strings.SplitAfter(wrapped, "\n")
+	//ensure last line ends with newline
+	lastLine := wrappedLines[len(wrappedLines)-1]
+	if lastLine[len(lastLine)-1] != '\n' {
+		wrappedLines[len(wrappedLines)-1] = lastLine + "\n"
+	}
+	outputLines[0] = []byte(firstLinePrefix + wrappedLines[0])
+	for i := 1; i < len(wrappedLines); i++ {
+		outputLines = append(outputLines, []byte(otherLinePrefix+wrappedLines[i]))
+	}
+	return outputLines
 }
 
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.
 func (h *HistoryState) Render(target io.Writer) error {
+	// ensure we're only working with the maximum number of messages to fill the screen
 	renderableHist := lastNElems(h.History, h.renderHeight)
+	renderedHistLines := make([][]byte, h.renderHeight)
+	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
-		_, err := fmt.Fprintf(target, "%s: %s\n", message.Username, message.Content)
+		lines := RenderMessage(message, h.renderWidth)
+		renderedHistLines = append(renderedHistLines, lines...)
+	}
+	// find the lines that will actually be visible in the rendered area
+	renderedHistLines = lastNElemsBytes(renderedHistLines, h.renderHeight)
+	// draw the lines that are visible to the screen
+	for _, line := range renderedHistLines {
+		_, err := target.Write(line)
 		if err != nil {
 			return err
 		}
