@@ -89,7 +89,7 @@ func TestRenderMessage(t *testing.T) {
 	}
 	// test every message width between a single line and having no space for message
 	// content to be displayed
-	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i++ {
+	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i-- {
 		collect := ""
 		rendered := tui.RenderMessage(&message, i)
 		if rendered == nil {
@@ -105,7 +105,11 @@ func TestRenderMessage(t *testing.T) {
 					t.Errorf("Expected line %d to start with %d spaces, found \"%s\"", index, prefixWidth, line)
 				}
 			}
-			collect += string(line[len(prefix):])
+			if line[len(line)-1] == '\n' {
+				collect += string(line[len(prefix) : len(line)-1]) // don't include trailing newline
+			} else {
+				collect += string(line[len(prefix):])
+			}
 		}
 		if collect != message.Content {
 			t.Errorf("Expected line contents to be \"%s\", found \"%s\"", message.Content, collect)
