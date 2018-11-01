@@ -10,7 +10,7 @@ import (
 	runewidth "github.com/mattn/go-runewidth"
 )
 
-var testMsg arbor.ChatMessage = arbor.ChatMessage{
+var testMsg = arbor.ChatMessage{
 	UUID:      "foo",
 	Parent:    "bar",
 	Content:   "what",

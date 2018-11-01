@@ -37,7 +37,7 @@ func (c *Client) listen() {
 
 // Connect wraps the given io.ReadWriter in a Client with methods for
 // interacting with a server on the other end.
-func Connect(connection io.ReadWriter) (*Client, error) {
+func Connect(connection io.ReadWriteCloser) (*Client, error) {
 	c := &Client{}
 	c.recvChan = arbor.MakeMessageReader(connection)
 	return c, nil
