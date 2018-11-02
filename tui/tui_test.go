@@ -158,13 +158,13 @@ func TestRenderSelectMessage(t *testing.T) {
 	hist.New(&message)
 	rendered := hist.RenderMessage(&message, 80)
 	if !strings.Contains(string(rendered[0]), tui.CurrentColor) && !strings.Contains(string(rendered[0]), tui.CurrentColor) {
-		t.Error("Expected current message to be rendered in color")
+		t.Error("Expected current message to be rendered in color", string(rendered[0]))
 	}
 	second := testMsg
 	second.UUID = "different"
-	rendered = hist.RenderMessage(&message, 80)
+	rendered = hist.RenderMessage(&second, 80)
 	if strings.Contains(string(rendered[0]), tui.CurrentColor) || strings.Contains(string(rendered[0]), tui.CurrentColor) {
-		t.Error("Did not expect non-current message to be rendered in color")
+		t.Error("Did not expect non-current message to be rendered in color", string(rendered[0]))
 	}
 }
 
