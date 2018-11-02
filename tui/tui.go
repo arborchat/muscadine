@@ -114,6 +114,21 @@ func (t *TUI) cursorDown(c *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+// cursorUp attempt to move the selected message upward through the message
+// history.
+func (t *TUI) cursorUp(c *gocui.Gui, v *gocui.View) error {
+	t.histState.CursorUp()
+	t.Update(func(g *gocui.Gui) error {
+		v, err := g.View(historyView)
+		if err != nil {
+			return err
+		}
+		v.Clear()
+		return t.histState.Render(v)
+	})
+	return nil
+}
+
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
@@ -132,6 +147,14 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 
 		if err := t.SetKeybinding(historyView, 'j', gocui.ModNone, t.cursorDown); err != nil {
 			log.Println("Failed registering cursorDown keystroke handler", err)
+		}
+
+		if err := t.SetKeybinding(historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp); err != nil {
+			log.Println("Failed registering cursorUp keystroke handler", err)
+		}
+
+		if err := t.SetKeybinding(historyView, 'k', gocui.ModNone, t.cursorUp); err != nil {
+			log.Println("Failed registering cursorUp keystroke handler", err)
 		}
 
 		if _, err := t.SetCurrentView(historyView); err != nil {
