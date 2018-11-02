@@ -16,11 +16,14 @@ type HistoryState struct {
 	// recent.
 	History                   []*arbor.ChatMessage
 	renderWidth, renderHeight int
+	current                   string
 }
 
 const (
 	defaultHistoryCapacity = 1000
 	defaultHistoryLength   = 0
+	CurrentColor           = "\x1b[0;31m"
+	ClearColor             = "\x1b[0;0m"
 )
 
 // NewHistoryState creates an empty HistoryState ready to be updated.
@@ -107,6 +110,9 @@ func (h *HistoryState) Render(target io.Writer) error {
 // New alerts the HistoryState of a newly received message.
 func (h *HistoryState) New(message *arbor.ChatMessage) error {
 	h.History = append(h.History, message)
+	if h.current == "" {
+		h.current = message.UUID
+	}
 	return nil
 }
 
@@ -121,5 +127,5 @@ func (h *HistoryState) SetDimensions(height, width int) {
 // added to a HistoryState is marked as current automatically. After that, Current can only
 // be changed by scrolling.
 func (h *HistoryState) Current() string {
-	return ""
+	return h.current
 }

@@ -145,3 +145,25 @@ func TestSelectMessage(t *testing.T) {
 		t.Errorf("Expected hist to keep first received message id as current (\"%s\"), got \"%s\"", message.UUID, id)
 	}
 }
+
+// TestRenderSelectMessage ensures that the current message in a HistoryState is rendered in a different
+// color.
+func TestRenderSelectMessage(t *testing.T) {
+	hist, err := tui.NewHistoryState()
+	if err != nil {
+		t.Skip("Should have been able to construct HistoryState with valid params", err)
+	}
+	hist.SetDimensions(24, 80)
+	message := testMsg
+	hist.New(&message)
+	rendered := hist.RenderMessage(&message, 80)
+	if !strings.Contains(string(rendered[0]), tui.CurrentColor) && !strings.Contains(string(rendered[0]), tui.CurrentColor) {
+		t.Error("Expected current message to be rendered in color")
+	}
+	second := testMsg
+	second.UUID = "different"
+	rendered = hist.RenderMessage(&message, 80)
+	if strings.Contains(string(rendered[0]), tui.CurrentColor) || strings.Contains(string(rendered[0]), tui.CurrentColor) {
+		t.Error("Did not expect non-current message to be rendered in color")
+	}
+}
