@@ -2,6 +2,7 @@ package tui
 
 import (
 	"log"
+	"sync"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/jroimartin/gocui"
@@ -15,6 +16,7 @@ type TUI struct {
 	done      chan struct{}
 	messages  chan *arbor.ChatMessage
 	histState *HistoryState
+	init      sync.Once
 }
 
 // NewTUI creates a new terminal user interface.
@@ -52,7 +54,7 @@ func (t *TUI) mainLoop() chan struct{} {
 		t.SetManagerFunc(t.layout)
 
 		if err := t.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
-			log.Println("Failed registering exit keystroke handler")
+			log.Println("Failed registering exit keystroke handler", err)
 		}
 
 		if err := t.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -97,6 +99,21 @@ func quit(c *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
+// cursorDown attempt to move the selected message downward through the message
+// history.
+func (t *TUI) cursorDown(c *gocui.Gui, v *gocui.View) error {
+	t.histState.CursorDown()
+	t.Update(func(g *gocui.Gui) error {
+		v, err := g.View(historyView)
+		if err != nil {
+			return err
+		}
+		v.Clear()
+		return t.histState.Render(v)
+	})
+	return nil
+}
+
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
@@ -107,5 +124,19 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 			return err
 		}
 	}
+	t.init.Do(func() {
+		if err := t.SetKeybinding(historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown); err != nil {
+			log.Println("Failed registering cursorDown keystroke handler", err)
+		}
+
+		if err := t.SetKeybinding(historyView, 'j', gocui.ModNone, t.cursorDown); err != nil {
+			log.Println("Failed registering cursorDown keystroke handler", err)
+		}
+
+		if _, err := t.SetCurrentView(historyView); err != nil {
+			log.Println("Failed to set historyView focus", err)
+		}
+	})
+
 	return nil
 }

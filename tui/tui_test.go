@@ -196,3 +196,21 @@ func TestRenderEmptyMessage(t *testing.T) {
 		t.Errorf("Should have inserted newline at end of empty rendered message line, found %v", rendered)
 	}
 }
+
+// TestCursorDown checks that the current message can be scrolled downward through the history.
+func TestCursorDown(t *testing.T) {
+	hist := historyStateOrSkip(t)
+	hist.SetDimensions(24, 80)
+	message := testMsg
+	newOrSkip(t, hist, &message)
+	second := testMsg
+	second.UUID = "second-message"
+	newOrSkip(t, hist, &second)
+	if id := hist.Current(); id != message.UUID {
+		t.Skip("History setting current message improperly")
+	}
+	hist.CursorDown()
+	if id := hist.Current(); id != second.UUID {
+		t.Errorf("History current message should havd id \"%s\", not \"%s\"", second.UUID, id)
+	}
+}

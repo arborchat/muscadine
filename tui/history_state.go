@@ -17,6 +17,7 @@ type HistoryState struct {
 	History                   []*arbor.ChatMessage
 	renderWidth, renderHeight int
 	current                   string
+	currentIndex              int
 }
 
 const (
@@ -119,6 +120,7 @@ func (h *HistoryState) New(message *arbor.ChatMessage) error {
 	h.History = append(h.History, message)
 	if h.current == "" {
 		h.current = message.UUID
+		h.currentIndex = len(h.History) - 1
 	}
 	return nil
 }
@@ -135,4 +137,20 @@ func (h *HistoryState) SetDimensions(height, width int) {
 // be changed by scrolling.
 func (h *HistoryState) Current() string {
 	return h.current
+}
+
+// CursorDown moves the current message downward within the history, if it is possible to do
+// so. If there are no messages in the history, it does nothing. If the current message is
+// at the bottom of the history, it does nothing.
+func (h *HistoryState) CursorDown() {
+	if len(h.History) < 2 {
+		// couldn't possibly scroll the cursor, 0 or 1 messages available
+		return
+	}
+	if h.currentIndex+1 >= len(h.History) {
+		// current message is at bottom of history, can't scroll down
+		return
+	}
+	h.current = h.History[h.currentIndex+1].UUID
+	h.currentIndex++
 }
