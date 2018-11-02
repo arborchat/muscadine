@@ -73,8 +73,12 @@ func (h *HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]
 	wrappedLines := strings.SplitAfter(wrapped, "\n")
 	//ensure last line ends with newline
 	lastLine := wrappedLines[len(wrappedLines)-1]
-	if lastLine[len(lastLine)-1] != '\n' {
+	if (len(lastLine) > 0 && lastLine[len(lastLine)-1] != '\n') || len(lastLine) == 0 {
 		wrappedLines[len(wrappedLines)-1] = lastLine + "\n"
+	}
+	if h.Current() == message.UUID {
+		wrappedLines[0] = CurrentColor + wrappedLines[0]
+		wrappedLines[len(wrappedLines)-1] += ClearColor
 	}
 	outputLines[0] = []byte(firstLinePrefix + wrappedLines[0])
 	for i := 1; i < len(wrappedLines); i++ {

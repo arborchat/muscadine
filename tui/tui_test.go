@@ -167,3 +167,24 @@ func TestRenderSelectMessage(t *testing.T) {
 		t.Error("Did not expect non-current message to be rendered in color")
 	}
 }
+
+// TestRenderEmptyMessage ensures that the HistoryState doesn't panic when trying to render
+// messages whose content contains empty lines.
+func TestRenderEmptyMessage(t *testing.T) {
+	hist, err := tui.NewHistoryState()
+	if err != nil {
+		t.Skip("Should have been able to construct HistoryState with valid params", err)
+	}
+	hist.SetDimensions(24, 80)
+	message := testMsg
+	message.Content = ""
+	// making sure that we don't crash
+	hist.RenderMessage(&message, 80)
+
+	// now check that we correctly render messages with a trailing newline
+	message.Content = "\n"
+	rendered := hist.RenderMessage(&message, 80)
+	if !strings.HasSuffix(string(rendered[len(rendered)-1]), "\n") {
+		t.Errorf("Should have inserted newline at end of empty rendered message line, found %v", rendered)
+	}
+}
