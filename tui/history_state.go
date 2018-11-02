@@ -154,3 +154,19 @@ func (h *HistoryState) CursorDown() {
 	h.current = h.History[h.currentIndex+1].UUID
 	h.currentIndex++
 }
+
+// CursorUp moves the current message upward within the history, if it is possible to do
+// so. If there are no messages in the history, it does nothing. If the current message is
+// at the top of the history, it does nothing.
+func (h *HistoryState) CursorUp() {
+	if len(h.History) < 2 {
+		// couldn't possibly scroll the cursor, 0 or 1 messages available
+		return
+	}
+	if h.currentIndex-1 < 0 {
+		// current message is at top of history, can't scroll up
+		return
+	}
+	h.current = h.History[h.currentIndex-1].UUID
+	h.currentIndex--
+}

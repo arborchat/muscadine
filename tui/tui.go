@@ -124,6 +124,7 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 			return err
 		}
 	}
+	// Ensure that keybindings are only registered once.
 	t.init.Do(func() {
 		if err := t.SetKeybinding(historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown); err != nil {
 			log.Println("Failed registering cursorDown keystroke handler", err)

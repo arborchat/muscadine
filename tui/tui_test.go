@@ -214,3 +214,25 @@ func TestCursorDown(t *testing.T) {
 		t.Errorf("History current message should havd id \"%s\", not \"%s\"", second.UUID, id)
 	}
 }
+
+// TestCursorUp checks that the current message can be scrolled upward through the history.
+func TestCursorUp(t *testing.T) {
+	hist := historyStateOrSkip(t)
+	hist.SetDimensions(24, 80)
+	message := testMsg
+	newOrSkip(t, hist, &message)
+	second := testMsg
+	second.UUID = "second-message"
+	newOrSkip(t, hist, &second)
+	if id := hist.Current(); id != message.UUID {
+		t.Skip("History setting current message improperly")
+	}
+	hist.CursorDown()
+	if id := hist.Current(); id != second.UUID {
+		t.Skipf("Scrolling down is broken, which makes scrolling up untestable")
+	}
+	hist.CursorUp()
+	if id := hist.Current(); id != message.UUID {
+		t.Errorf("History current message should havd id \"%s\", not \"%s\"", message.UUID, id)
+	}
+}
