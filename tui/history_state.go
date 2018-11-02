@@ -58,7 +58,7 @@ func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 // The important thing to note is that lines are broken at the same place and that
 // subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
 // as a byte slice.
-func RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
+func (h *HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
 	const separator = ": "
 	usernameWidth := runewidth.StringWidth(message.Username)
 	separatorWidth := runewidth.StringWidth(separator)
@@ -89,7 +89,7 @@ func (h *HistoryState) Render(target io.Writer) error {
 	renderedHistLines := make([][]byte, h.renderHeight)
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
-		lines := RenderMessage(message, h.renderWidth)
+		lines := h.RenderMessage(message, h.renderWidth)
 		renderedHistLines = append(renderedHistLines, lines...)
 	}
 	// find the lines that will actually be visible in the rendered area
@@ -115,4 +115,11 @@ func (h *HistoryState) New(message *arbor.ChatMessage) error {
 func (h *HistoryState) SetDimensions(height, width int) {
 	h.renderHeight = height
 	h.renderWidth = width
+}
+
+// Current returns the id of the currently-selected message, if there is one. The first message
+// added to a HistoryState is marked as current automatically. After that, Current can only
+// be changed by scrolling.
+func (h *HistoryState) Current() string {
+	return ""
 }

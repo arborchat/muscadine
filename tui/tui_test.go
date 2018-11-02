@@ -67,6 +67,10 @@ func TestHistoryState(t *testing.T) {
 // TestRenderMessage ensures that the rendering function correctly handles line wrapping
 // and related problems when preparing messages to be displayed.
 func TestRenderMessage(t *testing.T) {
+	hist, err := tui.NewHistoryState()
+	if err != nil {
+		t.Skip("Should have been able to construct HistoryState with valid params", err)
+	}
 	message := testMsg
 	message.Content = "let's use a ลาญฤๅเข่นฆ่าบีฑ much longer string いろはにほへとちりぬるを so that line wrapping アサキユメミシhappens"
 	separator := ": "
@@ -77,7 +81,7 @@ func TestRenderMessage(t *testing.T) {
 	prefixWidth := runewidth.StringWidth(prefix)
 	startingWidth := usernameWidth + contentWidth + separatorWidth
 	// test that it all fits on one line given sufficient space
-	rendered := tui.RenderMessage(&message, startingWidth)
+	rendered := hist.RenderMessage(&message, startingWidth)
 	if rendered == nil {
 		t.Fatal("Render produced nil output for 1 line message")
 	}
@@ -91,7 +95,7 @@ func TestRenderMessage(t *testing.T) {
 	// content to be displayed
 	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i-- {
 		collect := ""
-		rendered := tui.RenderMessage(&message, i)
+		rendered := hist.RenderMessage(&message, i)
 		if rendered == nil {
 			t.Fatalf("Render produced nil for %d width message", i)
 		}
@@ -114,5 +118,30 @@ func TestRenderMessage(t *testing.T) {
 		if collect != message.Content {
 			t.Errorf("Expected line contents to be \"%s\", found \"%s\"", message.Content, collect)
 		}
+	}
+}
+
+// TestSelectMessage ensures that the first message a historystate receives is marked as the current.
+func TestSelectMessage(t *testing.T) {
+	hist, err := tui.NewHistoryState()
+	if err != nil {
+		t.Skip("Should have been able to construct HistoryState with valid params", err)
+	}
+	message := testMsg
+	id := hist.Current()
+	if id != "" {
+		t.Errorf("Expected empty history to have empty current, got \"%s\"", id)
+	}
+	hist.New(&message)
+	id = hist.Current()
+	if id != message.UUID {
+		t.Errorf("Expected hist to set current to first received message (\"%s\"), got \"%s\"", message.UUID, id)
+	}
+	second := testMsg
+	second.UUID = "different"
+	hist.New(&second)
+	id = hist.Current()
+	if id != message.UUID {
+		t.Errorf("Expected hist to keep first received message id as current (\"%s\"), got \"%s\"", message.UUID, id)
 	}
 }
