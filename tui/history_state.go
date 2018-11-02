@@ -22,8 +22,11 @@ type HistoryState struct {
 const (
 	defaultHistoryCapacity = 1000
 	defaultHistoryLength   = 0
-	CurrentColor           = "\x1b[0;31m"
-	ClearColor             = "\x1b[0;0m"
+	// CurrentColor is the ANSI escape sequence for the color that is used to highlight
+	// the currently-selected mesage
+	CurrentColor = "\x1b[0;31m"
+	// ClearColor is the ANSI escape sequence to return to the default color
+	ClearColor = "\x1b[0;0m"
 )
 
 // NewHistoryState creates an empty HistoryState ready to be updated.
@@ -39,7 +42,7 @@ func lastNElems(slice []*arbor.ChatMessage, n int) []*arbor.ChatMessage {
 	if n >= len(slice) {
 		return slice
 	}
-	return slice[len(slice)-n : len(slice)]
+	return slice[len(slice)-n:]
 }
 
 // lastNElems returns the final `n` elements of the provided slice of messages
@@ -47,7 +50,7 @@ func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 	if n >= len(slice) {
 		return slice
 	}
-	return slice[len(slice)-n : len(slice)]
+	return slice[len(slice)-n:]
 }
 
 // RenderMessage creates a text format of a message that wraps its contents to fit

@@ -39,7 +39,7 @@ func TestHistoryState(t *testing.T) {
 		t.Error("Wrote data when no messages to render")
 	}
 	for i := 1; i <= iterations; i++ {
-		hist.New(&testMsg)
+		newOrSkip(t, hist, &testMsg)
 		b = new(bytes.Buffer)
 		err = hist.Render(b)
 		if err != nil {
@@ -141,17 +141,23 @@ func TestSelectMessage(t *testing.T) {
 	if id != "" {
 		t.Errorf("Expected empty history to have empty current, got \"%s\"", id)
 	}
-	hist.New(&message)
+	newOrSkip(t, hist, &message)
 	id = hist.Current()
 	if id != message.UUID {
 		t.Errorf("Expected hist to set current to first received message (\"%s\"), got \"%s\"", message.UUID, id)
 	}
 	second := testMsg
 	second.UUID = "different"
-	hist.New(&second)
+	newOrSkip(t, hist, &second)
 	id = hist.Current()
 	if id != message.UUID {
 		t.Errorf("Expected hist to keep first received message id as current (\"%s\"), got \"%s\"", message.UUID, id)
+	}
+}
+
+func newOrSkip(t *testing.T, hist *tui.HistoryState, msg *arbor.ChatMessage) {
+	if err := hist.New(msg); err != nil {
+		t.Skip(err)
 	}
 }
 
@@ -160,15 +166,15 @@ func TestSelectMessage(t *testing.T) {
 func TestRenderSelectMessage(t *testing.T) {
 	hist := historyStateOrSkip(t)
 	message := testMsg
-	hist.New(&message)
+	newOrSkip(t, hist, &message)
 	rendered := hist.RenderMessage(&message, 80)
-	if !strings.Contains(string(rendered[0]), tui.CurrentColor) && !strings.Contains(string(rendered[0]), tui.CurrentColor) {
+	if !strings.Contains(string(rendered[0]), tui.CurrentColor) && !strings.Contains(string(rendered[0]), tui.ClearColor) {
 		t.Error("Expected current message to be rendered in color", string(rendered[0]))
 	}
 	second := testMsg
 	second.UUID = "different"
 	rendered = hist.RenderMessage(&second, 80)
-	if strings.Contains(string(rendered[0]), tui.CurrentColor) || strings.Contains(string(rendered[0]), tui.CurrentColor) {
+	if strings.Contains(string(rendered[0]), tui.CurrentColor) || strings.Contains(string(rendered[0]), tui.ClearColor) {
 		t.Error("Did not expect non-current message to be rendered in color", string(rendered[0]))
 	}
 }
