@@ -2,6 +2,7 @@ package tui_test
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -64,13 +65,31 @@ func TestHistoryState(t *testing.T) {
 	}
 }
 
-// TestRenderMessage ensures that the rendering function correctly handles line wrapping
-// and related problems when preparing messages to be displayed.
-func TestRenderMessage(t *testing.T) {
+func historyStateOrSkip(t *testing.T) *tui.HistoryState {
 	hist, err := tui.NewHistoryState()
 	if err != nil {
 		t.Skip("Should have been able to construct HistoryState with valid params", err)
 	}
+	hist.SetDimensions(24, 80)
+	return hist
+}
+
+func errorIfNil(t *testing.T, rendered [][]byte, message string) {
+	if rendered == nil {
+		t.Fatal(message)
+	}
+}
+
+func errorIfNotPrefix(t *testing.T, prefix, actual, message string) {
+	if !strings.HasPrefix(actual, prefix) {
+		t.Error(message)
+	}
+}
+
+// TestRenderMessage ensures that the rendering function correctly handles line wrapping
+// and related problems when preparing messages to be displayed.
+func TestRenderMessage(t *testing.T) {
+	hist := historyStateOrSkip(t)
 	message := testMsg
 	message.Content = "let's use a ลาญฤๅเข่นฆ่าบีฑ much longer string いろはにほへとちりぬるを so that line wrapping アサキユメミシhappens"
 	separator := ": "
@@ -82,9 +101,8 @@ func TestRenderMessage(t *testing.T) {
 	startingWidth := usernameWidth + contentWidth + separatorWidth
 	// test that it all fits on one line given sufficient space
 	rendered := hist.RenderMessage(&message, startingWidth)
-	if rendered == nil {
-		t.Fatal("Render produced nil output for 1 line message")
-	}
+	errorIfNil(t, rendered, "Render produced nil output for 1 line message")
+
 	if len(rendered) < 1 || len(rendered) > 1 {
 		t.Errorf("Expected rendered message of %d lines, got %d", 1, len(rendered))
 	}
@@ -96,18 +114,12 @@ func TestRenderMessage(t *testing.T) {
 	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i-- {
 		collect := ""
 		rendered := hist.RenderMessage(&message, i)
-		if rendered == nil {
-			t.Fatalf("Render produced nil for %d width message", i)
-		}
+		errorIfNil(t, rendered, fmt.Sprintf("Render produced nil for %d width message", i))
 		for index, line := range rendered {
 			if index == 0 {
-				if string(line[:len(prefix)]) != prefix {
-					t.Errorf("Expected prefix \"%s\" on line %d, got \"%s\"", prefix, index, line)
-				}
+				errorIfNotPrefix(t, prefix, string(line), fmt.Sprintf("Expected prefix \"%s\" on line %d, got \"%s\"", prefix, index, line))
 			} else {
-				if string(line[:len(prefix)]) != strings.Repeat(" ", prefixWidth) {
-					t.Errorf("Expected line %d to start with %d spaces, found \"%s\"", index, prefixWidth, line)
-				}
+				errorIfNotPrefix(t, strings.Repeat(" ", prefixWidth), string(line), fmt.Sprintf("Expected line %d to start with %d spaces, found \"%s\"", index, prefixWidth, line))
 			}
 			if line[len(line)-1] == '\n' {
 				collect += string(line[len(prefix) : len(line)-1]) // don't include trailing newline
@@ -123,10 +135,7 @@ func TestRenderMessage(t *testing.T) {
 
 // TestSelectMessage ensures that the first message a historystate receives is marked as the current.
 func TestSelectMessage(t *testing.T) {
-	hist, err := tui.NewHistoryState()
-	if err != nil {
-		t.Skip("Should have been able to construct HistoryState with valid params", err)
-	}
+	hist := historyStateOrSkip(t)
 	message := testMsg
 	id := hist.Current()
 	if id != "" {
@@ -149,11 +158,7 @@ func TestSelectMessage(t *testing.T) {
 // TestRenderSelectMessage ensures that the current message in a HistoryState is rendered in a different
 // color.
 func TestRenderSelectMessage(t *testing.T) {
-	hist, err := tui.NewHistoryState()
-	if err != nil {
-		t.Skip("Should have been able to construct HistoryState with valid params", err)
-	}
-	hist.SetDimensions(24, 80)
+	hist := historyStateOrSkip(t)
 	message := testMsg
 	hist.New(&message)
 	rendered := hist.RenderMessage(&message, 80)
@@ -171,10 +176,7 @@ func TestRenderSelectMessage(t *testing.T) {
 // TestRenderEmptyMessage ensures that the HistoryState doesn't panic when trying to render
 // messages whose content contains empty lines.
 func TestRenderEmptyMessage(t *testing.T) {
-	hist, err := tui.NewHistoryState()
-	if err != nil {
-		t.Skip("Should have been able to construct HistoryState with valid params", err)
-	}
+	hist := historyStateOrSkip(t)
 	hist.SetDimensions(24, 80)
 	message := testMsg
 	message.Content = ""
