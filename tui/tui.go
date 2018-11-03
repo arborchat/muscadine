@@ -2,7 +2,6 @@ package tui
 
 import (
 	"log"
-	"sync"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/jroimartin/gocui"
@@ -20,7 +19,6 @@ type TUI struct {
 	messages  chan *arbor.ChatMessage
 	sendChan  chan<- *arbor.ProtocolMessage
 	histState *HistoryState
-	init      sync.Once
 	editMode  bool
 }
 
@@ -184,10 +182,9 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-	}
-	histView.Title = "Chat History"
-	// Ensure that keybindings are only registered once.
-	t.init.Do(func() {
+		histView.Title = "Chat History"
+		histView.Wrap = true
+		// Ensure that keybindings are only registered once.
 		if err := t.SetKeybinding(historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown); err != nil {
 			log.Println("Failed registering cursorDown keystroke handler", err)
 		}
@@ -211,13 +208,14 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		if _, err := t.SetCurrentView(historyView); err != nil {
 			log.Println("Failed to set historyView focus", err)
 		}
-	})
+	}
 
 	if v, err := gui.SetView(editView, 0, histMaxY+1, histMaxX, mY-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			log.Println("Error creating editView", err)
 		}
 		v.Editable = true
+		v.Wrap = true
 		v.Editor = gocui.DefaultEditor
 		v.Title = preEditViewTitle
 

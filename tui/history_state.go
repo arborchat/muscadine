@@ -3,10 +3,8 @@ package tui
 import (
 	"io"
 	"sort"
-	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
-	runewidth "github.com/mattn/go-runewidth"
 )
 
 // HistoryState maintains the state of what is visible in the client and
@@ -74,30 +72,18 @@ func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 // The important thing to note is that lines are broken at the same place and that
 // subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
 // as a byte slice.
-func (h HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
+func (h HistoryState) RenderMessage(message *arbor.ChatMessage) []byte {
 	const separator = ": "
-	usernameWidth := runewidth.StringWidth(message.Username)
-	separatorWidth := runewidth.StringWidth(separator)
-	firstLinePrefix := message.Username + separator
-	otherLinePrefix := strings.Repeat(" ", usernameWidth+separatorWidth)
-	messageRenderWidth := width - (usernameWidth + separatorWidth)
-	outputLines := make([][]byte, 1)
-	wrapped := runewidth.Wrap(message.Content, messageRenderWidth)
-	wrappedLines := strings.SplitAfter(wrapped, "\n")
-	//ensure last line ends with newline
-	lastLine := wrappedLines[len(wrappedLines)-1]
-	if (len(lastLine) > 0 && lastLine[len(lastLine)-1] != '\n') || len(lastLine) == 0 {
-		wrappedLines[len(wrappedLines)-1] = lastLine + "\n"
+
+	text := message.Content
+	if len(text) > 0 && text[len(text)-1] != '\n' {
+		text += "\n"
 	}
 	if h.Current() == message.UUID {
-		wrappedLines[0] = CurrentColor + wrappedLines[0]
-		wrappedLines[len(wrappedLines)-1] += ClearColor
+		text = CurrentColor + text + ClearColor
 	}
-	outputLines[0] = []byte(firstLinePrefix + wrappedLines[0])
-	for i := 1; i < len(wrappedLines); i++ {
-		outputLines = append(outputLines, []byte(otherLinePrefix+wrappedLines[i]))
-	}
-	return outputLines
+	text = message.Username + separator + text
+	return []byte(text)
 }
 
 // Render writes the correct contents of the history to the provided
@@ -106,16 +92,13 @@ func (h HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]b
 func (h HistoryState) Render(target io.Writer) error {
 	// ensure we're only working with the maximum number of messages to fill the screen
 	renderableHist := lastNElems(h.History, h.renderHeight)
-	renderedHistLines := make([][]byte, h.renderHeight)
+	rendered := make([][]byte, h.renderHeight)
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
-		lines := h.RenderMessage(message, h.renderWidth)
-		renderedHistLines = append(renderedHistLines, lines...)
+		rendered = append(rendered, h.RenderMessage(message))
 	}
-	// find the lines that will actually be visible in the rendered area
-	renderedHistLines = lastNElemsBytes(renderedHistLines, h.renderHeight)
 	// draw the lines that are visible to the screen
-	for _, line := range renderedHistLines {
+	for _, line := range rendered {
 		_, err := target.Write(line)
 		if err != nil {
 			return err
