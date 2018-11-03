@@ -19,6 +19,7 @@ type HistoryState struct {
 	renderWidth, renderHeight int
 	current                   string
 	currentIndex              int
+	changeFuncs               chan func()
 }
 
 const (
@@ -34,8 +35,15 @@ const (
 // NewHistoryState creates an empty HistoryState ready to be updated.
 func NewHistoryState() (*HistoryState, error) {
 	h := &HistoryState{
-		History: make([]*arbor.ChatMessage, defaultHistoryLength, defaultHistoryCapacity),
+		History:     make([]*arbor.ChatMessage, defaultHistoryLength, defaultHistoryCapacity),
+		changeFuncs: make(chan func()),
 	}
+	// launch a goroutine to serially execute all state modifications
+	go func(h *HistoryState) {
+		for f := range h.changeFuncs {
+			f()
+		}
+	}(h)
 	return h, nil
 }
 
@@ -66,7 +74,7 @@ func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 // The important thing to note is that lines are broken at the same place and that
 // subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
 // as a byte slice.
-func (h *HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
+func (h HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
 	const separator = ": "
 	usernameWidth := runewidth.StringWidth(message.Username)
 	separatorWidth := runewidth.StringWidth(separator)
@@ -95,7 +103,7 @@ func (h *HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.
-func (h *HistoryState) Render(target io.Writer) error {
+func (h HistoryState) Render(target io.Writer) error {
 	// ensure we're only working with the maximum number of messages to fill the screen
 	renderableHist := lastNElems(h.History, h.renderHeight)
 	renderedHistLines := make([][]byte, h.renderHeight)
@@ -118,33 +126,43 @@ func (h *HistoryState) Render(target io.Writer) error {
 
 // New alerts the HistoryState of a newly received message.
 func (h *HistoryState) New(message *arbor.ChatMessage) error {
-	h.History = append(h.History, message)
-	// ensure the new message is in the proper place
-	sort.Slice(h.History, func(i, j int) bool {
-		return h.History[i].Timestamp < h.History[j].Timestamp
-	})
-	if h.current == "" {
-		h.current = message.UUID
+	done := make(chan error)
+	h.changeFuncs <- func() {
+		defer close(done)
+		h.History = append(h.History, message)
+		// ensure the new message is in the proper place
+		sort.Slice(h.History, func(i, j int) bool {
+			return h.History[i].Timestamp < h.History[j].Timestamp
+		})
+		if h.current == "" {
+			h.current = message.UUID
+		}
 		for index, curMsg := range h.History {
-			if message.UUID == curMsg.UUID {
+			if h.current == curMsg.UUID {
 				h.currentIndex = index
 			}
 		}
 	}
-	return nil
+
+	return <-done
 }
 
 // SetDimensions notifes the HistoryState that the renderable display area has changed
 // so that its next render can avoid rendering offscreen.
 func (h *HistoryState) SetDimensions(height, width int) {
-	h.renderHeight = height
-	h.renderWidth = width
+	done := make(chan error)
+	h.changeFuncs <- func() {
+		defer close(done)
+		h.renderHeight = height
+		h.renderWidth = width
+	}
+	<-done
 }
 
 // Current returns the id of the currently-selected message, if there is one. The first message
 // added to a HistoryState is marked as current automatically. After that, Current can only
 // be changed by scrolling.
-func (h *HistoryState) Current() string {
+func (h HistoryState) Current() string {
 	return h.current
 }
 
@@ -152,30 +170,40 @@ func (h *HistoryState) Current() string {
 // so. If there are no messages in the history, it does nothing. If the current message is
 // at the bottom of the history, it does nothing.
 func (h *HistoryState) CursorDown() {
-	if len(h.History) < 2 {
-		// couldn't possibly scroll the cursor, 0 or 1 messages available
-		return
+	done := make(chan error)
+	h.changeFuncs <- func() {
+		defer close(done)
+		if len(h.History) < 2 {
+			// couldn't possibly scroll the cursor, 0 or 1 messages available
+			return
+		}
+		if h.currentIndex+1 >= len(h.History) {
+			// current message is at bottom of history, can't scroll down
+			return
+		}
+		h.current = h.History[h.currentIndex+1].UUID
+		h.currentIndex++
 	}
-	if h.currentIndex+1 >= len(h.History) {
-		// current message is at bottom of history, can't scroll down
-		return
-	}
-	h.current = h.History[h.currentIndex+1].UUID
-	h.currentIndex++
+	<-done
 }
 
 // CursorUp moves the current message upward within the history, if it is possible to do
 // so. If there are no messages in the history, it does nothing. If the current message is
 // at the top of the history, it does nothing.
 func (h *HistoryState) CursorUp() {
-	if len(h.History) < 2 {
-		// couldn't possibly scroll the cursor, 0 or 1 messages available
-		return
+	done := make(chan error)
+	h.changeFuncs <- func() {
+		defer close(done)
+		if len(h.History) < 2 {
+			// couldn't possibly scroll the cursor, 0 or 1 messages available
+			return
+		}
+		if h.currentIndex-1 < 0 {
+			// current message is at top of history, can't scroll up
+			return
+		}
+		h.current = h.History[h.currentIndex-1].UUID
+		h.currentIndex--
 	}
-	if h.currentIndex-1 < 0 {
-		// current message is at top of history, can't scroll up
-		return
-	}
-	h.current = h.History[h.currentIndex-1].UUID
-	h.currentIndex--
+	<-done
 }

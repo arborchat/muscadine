@@ -17,6 +17,7 @@ type TUI struct {
 	messages  chan *arbor.ChatMessage
 	histState *HistoryState
 	init      sync.Once
+	editMode  bool
 }
 
 // NewTUI creates a new terminal user interface.
@@ -81,14 +82,7 @@ func (t *TUI) update() {
 			log.Println(err)
 		}
 
-		t.Update(func(g *gocui.Gui) error {
-			v, err := g.View(historyView)
-			if err != nil {
-				return err
-			}
-			v.Clear()
-			return t.histState.Render(v)
-		})
+		t.reRender()
 	}
 }
 
@@ -107,14 +101,7 @@ func quit(c *gocui.Gui, v *gocui.View) error {
 // history.
 func (t *TUI) cursorDown(c *gocui.Gui, v *gocui.View) error {
 	t.histState.CursorDown()
-	t.Update(func(g *gocui.Gui) error {
-		v, err := g.View(historyView)
-		if err != nil {
-			return err
-		}
-		v.Clear()
-		return t.histState.Render(v)
-	})
+	t.reRender()
 	return nil
 }
 
@@ -122,6 +109,12 @@ func (t *TUI) cursorDown(c *gocui.Gui, v *gocui.View) error {
 // history.
 func (t *TUI) cursorUp(c *gocui.Gui, v *gocui.View) error {
 	t.histState.CursorUp()
+	t.reRender()
+	return nil
+}
+
+// reRender forces a redraw of the historyView
+func (t *TUI) reRender() {
 	t.Update(func(g *gocui.Gui) error {
 		v, err := g.View(historyView)
 		if err != nil {
@@ -130,14 +123,24 @@ func (t *TUI) cursorUp(c *gocui.Gui, v *gocui.View) error {
 		v.Clear()
 		return t.histState.Render(v)
 	})
+}
+
+// composeReply starts replying to the current message.
+func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
+	t.editMode = true
 	return nil
 }
 
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
-	_, err := gui.SetView(historyView, 0, 0, mX-1, mY-1)
-	t.histState.SetDimensions(mY-2, mX-2)
+	histMaxX := mX - 1
+	histMaxY := mY - 1
+	if t.editMode {
+		histMaxY -= 3
+	}
+	_, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
+	t.histState.SetDimensions(histMaxY-1, histMaxX-1)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -158,6 +161,10 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		}
 
 		if err := t.SetKeybinding(historyView, 'k', gocui.ModNone, t.cursorUp); err != nil {
+			log.Println("Failed registering cursorUp keystroke handler", err)
+		}
+
+		if err := t.SetKeybinding(historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply); err != nil {
 			log.Println("Failed registering cursorUp keystroke handler", err)
 		}
 
