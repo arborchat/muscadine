@@ -10,19 +10,23 @@ import (
 
 const historyView = "history"
 const editView = "edit"
+const preEditViewTitle = "Arrows to select, hit enter to reply"
+const midEditViewTitle = "Type your reply, hit enter to send"
 
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
 	*gocui.Gui
 	done      chan struct{}
 	messages  chan *arbor.ChatMessage
+	sendChan  chan<- *arbor.ProtocolMessage
 	histState *HistoryState
 	init      sync.Once
 	editMode  bool
 }
 
-// NewTUI creates a new terminal user interface.
-func NewTUI() (*TUI, error) {
+// NewTUI creates a new terminal user interface. The provided channel will be
+// used to relay any protocol messages initiated by the TUI.
+func NewTUI(sendChan chan<- *arbor.ProtocolMessage) (*TUI, error) {
 	gui, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		return nil, err
@@ -36,6 +40,7 @@ func NewTUI() (*TUI, error) {
 		Gui:       gui,
 		messages:  make(chan *arbor.ChatMessage),
 		histState: hs,
+		sendChan:  sendChan,
 	}
 	t.done = t.mainLoop()
 
@@ -87,6 +92,14 @@ func (t *TUI) update() {
 	}
 }
 
+// send relays a ProtocolMessage to a server.
+func (t *TUI) send(proto *arbor.ProtocolMessage) {
+	// ensure we don't block on this
+	go func() {
+		t.sendChan <- proto
+	}()
+}
+
 // Display adds the provided message to the visible interface.
 func (t *TUI) Display(message *arbor.ChatMessage) {
 	t.messages <- message
@@ -128,8 +141,35 @@ func (t *TUI) reRender() {
 
 // composeReply starts replying to the current message.
 func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
-	t.editMode = true
+	v, err := t.Gui.SetCurrentView(editView)
+	if err != nil {
+		return err
+	}
+	v.Title = midEditViewTitle
+
 	return nil
+}
+
+// sendReply starts replying to the current message.
+func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
+	content := v.Buffer()
+	if len(content) < 2 {
+		// don't allow messages shorter than one character
+		return nil
+	}
+	v.Clear()
+	v.SetCursor(0, 0)
+	v.Title = preEditViewTitle
+	chat, err := arbor.NewChatMessage(content[:len(content)-1])
+	if err != nil {
+		return err
+	}
+	chat.Parent = t.histState.Current()
+	chat.Username = "muscadine"
+	proto := &arbor.ProtocolMessage{ChatMessage: chat, Type: arbor.NewMessageType}
+	t.send(proto)
+	t.Gui.SetCurrentView(historyView)
+	return err
 }
 
 // layout places views in the UI.
@@ -137,9 +177,7 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
 	histMaxX := mX - 1
 	histMaxY := mY - 1
-	if t.editMode {
-		histMaxY -= 3
-	}
+	histMaxY -= 3
 	t.histState.SetDimensions(histMaxY-1, histMaxX-1)
 	histView, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
 	if err != nil {
@@ -175,16 +213,18 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		}
 	})
 
-	if t.editMode {
-		if v, err := gui.SetView(editView, 0, histMaxY+1, histMaxX, mY-1); err != nil {
-			if err != gocui.ErrUnknownView {
-				log.Println("Error creating editView", err)
-			} else {
-				v.Editable = true
-				v.Editor = gocui.DefaultEditor
-				t.SetCurrentView(editView)
-			}
+	if v, err := gui.SetView(editView, 0, histMaxY+1, histMaxX, mY-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			log.Println("Error creating editView", err)
 		}
+		v.Editable = true
+		v.Editor = gocui.DefaultEditor
+		v.Title = preEditViewTitle
+
+		if err := t.SetKeybinding(editView, gocui.KeyEnter, gocui.ModNone, t.sendReply); err != nil {
+			log.Println("Failed registering cursorUp keystroke handler", err)
+		}
+
 	}
 
 	return nil

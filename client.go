@@ -76,11 +76,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	ui, err = tui.NewTUI()
+	client, err := Connect(conn)
 	if err != nil {
 		log.Fatal(err)
 	}
-	client, err := Connect(conn)
+	ui, err = tui.NewTUI(client.sendChan)
 	if err != nil {
 		log.Fatal(err)
 	}
