@@ -120,7 +120,7 @@ func (h *HistoryState) Render(target io.Writer) error {
 func (h *HistoryState) New(message *arbor.ChatMessage) error {
 	h.History = append(h.History, message)
 	// ensure the new message is in the proper place
-	sort.SliceStable(h.History, func(i, j int) bool {
+	sort.Slice(h.History, func(i, j int) bool {
 		return h.History[i].Timestamp < h.History[j].Timestamp
 	})
 	if h.current == "" {

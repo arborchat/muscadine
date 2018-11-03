@@ -20,6 +20,7 @@ type UI interface {
 // Client can be used to communicate with an Arbor server.
 type Client struct {
 	recvChan       <-chan *arbor.ProtocolMessage
+	sendChan       chan<- *arbor.ProtocolMessage
 	recieveHandler func(*arbor.ChatMessage)
 }
 
@@ -31,6 +32,17 @@ func (c *Client) listen() {
 			if c.recieveHandler != nil {
 				c.recieveHandler(m.ChatMessage)
 			}
+		case arbor.WelcomeType:
+			c.sendChan <- &arbor.ProtocolMessage{
+				Type:        arbor.QueryType,
+				ChatMessage: &arbor.ChatMessage{UUID: m.Root},
+			}
+			for _, recent := range m.Recent {
+				c.sendChan <- &arbor.ProtocolMessage{
+					Type:        arbor.QueryType,
+					ChatMessage: &arbor.ChatMessage{UUID: recent},
+				}
+			}
 		}
 	}
 }
@@ -40,6 +52,7 @@ func (c *Client) listen() {
 func Connect(connection io.ReadWriteCloser) (*Client, error) {
 	c := &Client{}
 	c.recvChan = arbor.MakeMessageReader(connection)
+	c.sendChan = arbor.MakeMessageWriter(connection)
 	return c, nil
 }
 
