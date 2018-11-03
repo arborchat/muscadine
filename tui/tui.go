@@ -9,6 +9,7 @@ import (
 )
 
 const historyView = "history"
+const editView = "edit"
 
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
@@ -139,13 +140,14 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 	if t.editMode {
 		histMaxY -= 3
 	}
-	_, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
 	t.histState.SetDimensions(histMaxY-1, histMaxX-1)
+	histView, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 	}
+	histView.Title = "Chat History"
 	// Ensure that keybindings are only registered once.
 	t.init.Do(func() {
 		if err := t.SetKeybinding(historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown); err != nil {
@@ -172,6 +174,18 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 			log.Println("Failed to set historyView focus", err)
 		}
 	})
+
+	if t.editMode {
+		if v, err := gui.SetView(editView, 0, histMaxY+1, histMaxX, mY-1); err != nil {
+			if err != gocui.ErrUnknownView {
+				log.Println("Error creating editView", err)
+			} else {
+				v.Editable = true
+				v.Editor = gocui.DefaultEditor
+				t.SetCurrentView(editView)
+			}
+		}
+	}
 
 	return nil
 }
