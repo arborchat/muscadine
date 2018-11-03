@@ -2,6 +2,7 @@ package tui
 
 import (
 	"io"
+	"sort"
 	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -118,9 +119,17 @@ func (h *HistoryState) Render(target io.Writer) error {
 // New alerts the HistoryState of a newly received message.
 func (h *HistoryState) New(message *arbor.ChatMessage) error {
 	h.History = append(h.History, message)
+	// ensure the new message is in the proper place
+	sort.SliceStable(h.History, func(i, j int) bool {
+		return h.History[i].Timestamp < h.History[j].Timestamp
+	})
 	if h.current == "" {
 		h.current = message.UUID
-		h.currentIndex = len(h.History) - 1
+		for index, curMsg := range h.History {
+			if message.UUID == curMsg.UUID {
+				h.currentIndex = index
+			}
+		}
 	}
 	return nil
 }

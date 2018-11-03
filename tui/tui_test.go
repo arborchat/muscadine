@@ -236,3 +236,38 @@ func TestCursorUp(t *testing.T) {
 		t.Errorf("History current message should havd id \"%s\", not \"%s\"", message.UUID, id)
 	}
 }
+
+// TestMessageSort ensures that the historystate sorts messages that it displays
+// according to their timestamps.
+func TestMessageSort(t *testing.T) {
+	hist := historyStateOrSkip(t)
+	hist.SetDimensions(24, 80)
+	message := testMsg
+	message.Content = "one"
+	message.Timestamp = 10
+	newOrSkip(t, hist, &message)
+	message3 := testMsg
+	message3.Content = "three"
+	message3.Timestamp = 30
+	newOrSkip(t, hist, &message3)
+	message2 := testMsg
+	message2.Content = "two"
+	message2.Timestamp = 20
+	newOrSkip(t, hist, &message2)
+	message0 := testMsg
+	message0.Content = "zero"
+	message0.Timestamp = 0
+	newOrSkip(t, hist, &message0)
+	buf := new(bytes.Buffer)
+	err := hist.Render(buf)
+	if err != nil {
+		t.Error("Unable to render buffer", err)
+	}
+	zeroIndex := strings.Index(buf.String(), "zero")
+	oneIndex := strings.Index(buf.String(), "one")
+	twoIndex := strings.Index(buf.String(), "two")
+	threeIndex := strings.Index(buf.String(), "three")
+	if zeroIndex >= oneIndex || oneIndex >= twoIndex || twoIndex >= threeIndex {
+		t.Errorf("Messages not rendered in timestamp order, 0 at %d, 1 at %d, 2 at %d, 3 at %d", zeroIndex, oneIndex, twoIndex, threeIndex)
+	}
+}
