@@ -184,27 +184,25 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		}
 		histView.Title = "Chat History"
 		histView.Wrap = true
-		// Ensure that keybindings are only registered once.
-		if err := t.SetKeybinding(historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown); err != nil {
-			log.Println("Failed registering cursorDown keystroke handler", err)
-		}
 
-		if err := t.SetKeybinding(historyView, 'j', gocui.ModNone, t.cursorDown); err != nil {
-			log.Println("Failed registering cursorDown keystroke handler", err)
+		keybindings := []struct {
+			View        string
+			Key         interface{}
+			Modifier    gocui.Modifier
+			Handler     func(*gocui.Gui, *gocui.View) error
+			HandlerName string
+		}{
+			{historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown, "cursorDown"},
+			{historyView, 'j', gocui.ModNone, t.cursorDown, "cursorDown"},
+			{historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp, "cursorUp"},
+			{historyView, 'k', gocui.ModNone, t.cursorUp, "cursorUp"},
+			{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
 		}
-
-		if err := t.SetKeybinding(historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp); err != nil {
-			log.Println("Failed registering cursorUp keystroke handler", err)
+		for _, binding := range keybindings {
+			if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
+				log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
+			}
 		}
-
-		if err := t.SetKeybinding(historyView, 'k', gocui.ModNone, t.cursorUp); err != nil {
-			log.Println("Failed registering cursorUp keystroke handler", err)
-		}
-
-		if err := t.SetKeybinding(historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply); err != nil {
-			log.Println("Failed registering cursorUp keystroke handler", err)
-		}
-
 		if _, err := t.SetCurrentView(historyView); err != nil {
 			log.Println("Failed to set historyView focus", err)
 		}
