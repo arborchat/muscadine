@@ -125,6 +125,25 @@ func (t *TUI) cursorUp(c *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+// scrollDown attempts to move the view downwards through the history.
+func (t *TUI) scrollDown(c *gocui.Gui, v *gocui.View) error {
+	currentX, currentY := v.Origin()
+	maxY := len(v.BufferLines())
+	if currentY < maxY {
+		return v.SetOrigin(currentX, currentY+1)
+	}
+	return nil
+}
+
+// scrollUp attempts to move the view upwards through the history.
+func (t *TUI) scrollUp(c *gocui.Gui, v *gocui.View) error {
+	currentX, currentY := v.Origin()
+	if currentY > 0 {
+		return v.SetOrigin(currentX, currentY-1)
+	}
+	return nil
+}
+
 // reRender forces a redraw of the historyView
 func (t *TUI) reRender() {
 	t.Update(func(g *gocui.Gui) error {
@@ -157,6 +176,7 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	}
 	v.Clear()
 	v.SetCursor(0, 0)
+	v.SetOrigin(0, 0)
 	v.Title = preEditViewTitle
 	chat, err := arbor.NewChatMessage(content[:len(content)-1])
 	if err != nil {
@@ -194,8 +214,12 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		}{
 			{historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown, "cursorDown"},
 			{historyView, 'j', gocui.ModNone, t.cursorDown, "cursorDown"},
+			{historyView, gocui.KeyArrowRight, gocui.ModNone, t.scrollDown, "scrollDown"},
+			{historyView, 'l', gocui.ModNone, t.scrollDown, "scrollDown"},
 			{historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp, "cursorUp"},
 			{historyView, 'k', gocui.ModNone, t.cursorUp, "cursorUp"},
+			{historyView, gocui.KeyArrowLeft, gocui.ModNone, t.scrollUp, "scrollUp"},
+			{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
 			{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
 		}
 		for _, binding := range keybindings {
