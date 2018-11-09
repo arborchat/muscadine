@@ -159,6 +159,7 @@ func (t *TUI) reRender() {
 // historyMode transitions the TUI to interactively scroll the history.
 // All state change related to that transition should be defined here.
 func (t *TUI) historyMode() error {
+	t.Gui.Cursor = false
 	v, err := t.Gui.View(editView)
 	if err != nil {
 		return err
@@ -174,6 +175,7 @@ func (t *TUI) historyMode() error {
 // composeMode transitions the TUI to interactively editing messages.
 // All state change related to that transition should be defined here.
 func (t *TUI) composeMode() error {
+	t.Gui.Cursor = true
 	v, err := t.Gui.SetCurrentView(editView)
 	if err != nil {
 		return err
