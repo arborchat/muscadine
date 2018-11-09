@@ -156,15 +156,36 @@ func (t *TUI) reRender() {
 	})
 }
 
-// composeReply starts replying to the current message.
-func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
+// historyMode transitions the TUI to interactively scroll the history.
+// All state change related to that transition should be defined here.
+func (t *TUI) historyMode() error {
+	v, err := t.Gui.View(editView)
+	if err != nil {
+		return err
+	}
+	v.Title = preEditViewTitle
+	_, err = t.Gui.SetCurrentView(historyView)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// composeMode transitions the TUI to interactively editing messages.
+// All state change related to that transition should be defined here.
+func (t *TUI) composeMode() error {
 	v, err := t.Gui.SetCurrentView(editView)
 	if err != nil {
 		return err
 	}
 	v.Title = midEditViewTitle
-
 	return nil
+
+}
+
+// composeReply starts replying to the current message.
+func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
+	return t.composeMode()
 }
 
 // sendReply starts replying to the current message.
@@ -177,7 +198,6 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	v.Clear()
 	v.SetCursor(0, 0)
 	v.SetOrigin(0, 0)
-	v.Title = preEditViewTitle
 	chat, err := arbor.NewChatMessage(content[:len(content)-1])
 	if err != nil {
 		return err
@@ -186,8 +206,7 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	chat.Username = "muscadine"
 	proto := &arbor.ProtocolMessage{ChatMessage: chat, Type: arbor.NewMessageType}
 	t.send(proto)
-	t.Gui.SetCurrentView(historyView)
-	return err
+	return t.historyMode()
 }
 
 // layout places views in the UI.
