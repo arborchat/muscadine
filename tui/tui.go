@@ -131,7 +131,7 @@ func (t *TUI) scrollDown(c *gocui.Gui, v *gocui.View) error {
 	currentX, currentY := v.Origin()
 	maxY := t.histState.Height()
 	_, viewHeight := v.Size()
-	if currentY < (maxY - viewHeight - 1) {
+	if currentY < (maxY - viewHeight - 2) {
 		return v.SetOrigin(currentX, currentY+1)
 	}
 	return nil
@@ -194,7 +194,6 @@ func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
 
 // cancelReply exits compose mode and returns to history mode.
 func (t *TUI) cancelReply(c *gocui.Gui, v *gocui.View) error {
-	log.Println("cancelreply")
 	return t.historyMode()
 }
 
