@@ -13,12 +13,18 @@ const editView = "edit"
 const preEditViewTitle = "Arrows to select, hit enter to reply"
 const midEditViewTitle = "Type your reply, hit enter to send"
 
+// Composer writes and sends protocol messages
+type Composer interface {
+	Reply(string, string) error
+	Query(string)
+}
+
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
 	*gocui.Gui
-	done      chan struct{}
-	messages  chan *arbor.ChatMessage
-	sendChan  chan<- *arbor.ProtocolMessage
+	done     chan struct{}
+	messages chan *arbor.ChatMessage
+	Composer
 	histState *HistoryState
 	init      sync.Once
 	editMode  bool
@@ -26,7 +32,7 @@ type TUI struct {
 
 // NewTUI creates a new terminal user interface. The provided channel will be
 // used to relay any protocol messages initiated by the TUI.
-func NewTUI(sendChan chan<- *arbor.ProtocolMessage) (*TUI, error) {
+func NewTUI(composer Composer) (*TUI, error) {
 	gui, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		return nil, err
@@ -41,7 +47,7 @@ func NewTUI(sendChan chan<- *arbor.ProtocolMessage) (*TUI, error) {
 		Gui:       gui,
 		messages:  make(chan *arbor.ChatMessage),
 		histState: hs,
-		sendChan:  sendChan,
+		Composer:  composer,
 	}
 	t.done = t.mainLoop()
 
@@ -91,14 +97,6 @@ func (t *TUI) update() {
 
 		t.reRender()
 	}
-}
-
-// send relays a ProtocolMessage to a server.
-func (t *TUI) send(proto *arbor.ProtocolMessage) {
-	// ensure we don't block on this
-	go func() {
-		t.sendChan <- proto
-	}()
 }
 
 // Display adds the provided message to the visible interface.
@@ -210,14 +208,7 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	v.Clear()
 	v.SetCursor(0, 0)
 	v.SetOrigin(0, 0)
-	chat, err := arbor.NewChatMessage(content[:len(content)-1])
-	if err != nil {
-		return err
-	}
-	chat.Parent = t.histState.Current()
-	chat.Username = "muscadine"
-	proto := &arbor.ProtocolMessage{ChatMessage: chat, Type: arbor.NewMessageType}
-	t.send(proto)
+	t.Composer.Reply(t.histState.Current(), content[:len(content)-1])
 	return t.historyMode()
 }
 
