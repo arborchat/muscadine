@@ -31,6 +31,7 @@ func NewTUI(sendChan chan<- *arbor.ProtocolMessage) (*TUI, error) {
 	if err != nil {
 		return nil, err
 	}
+	gui.InputEsc = true
 	hs, err := NewHistoryState()
 	if err != nil {
 		return nil, err
@@ -193,6 +194,12 @@ func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
 	return t.composeMode()
 }
 
+// cancelReply exits compose mode and returns to history mode.
+func (t *TUI) cancelReply(c *gocui.Gui, v *gocui.View) error {
+	log.Println("cancelreply")
+	return t.historyMode()
+}
+
 // sendReply starts replying to the current message.
 func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	content := v.Buffer()
@@ -216,6 +223,25 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
+	keybindings := []struct {
+		View        string
+		Key         interface{}
+		Modifier    gocui.Modifier
+		Handler     func(*gocui.Gui, *gocui.View) error
+		HandlerName string
+	}{
+		{historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown, "cursorDown"},
+		{historyView, 'j', gocui.ModNone, t.cursorDown, "cursorDown"},
+		{historyView, gocui.KeyArrowRight, gocui.ModNone, t.scrollDown, "scrollDown"},
+		{historyView, 'l', gocui.ModNone, t.scrollDown, "scrollDown"},
+		{historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp, "cursorUp"},
+		{historyView, 'k', gocui.ModNone, t.cursorUp, "cursorUp"},
+		{historyView, gocui.KeyArrowLeft, gocui.ModNone, t.scrollUp, "scrollUp"},
+		{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
+		{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
+		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
+		{editView, gocui.KeyEsc, gocui.ModNone, t.cancelReply, "cancelReply"},
+	}
 	mX, mY := gui.Size()
 	histMaxX := mX - 1
 	histMaxY := mY - 1
@@ -228,26 +254,11 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		}
 		histView.Title = "Chat History"
 
-		keybindings := []struct {
-			View        string
-			Key         interface{}
-			Modifier    gocui.Modifier
-			Handler     func(*gocui.Gui, *gocui.View) error
-			HandlerName string
-		}{
-			{historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown, "cursorDown"},
-			{historyView, 'j', gocui.ModNone, t.cursorDown, "cursorDown"},
-			{historyView, gocui.KeyArrowRight, gocui.ModNone, t.scrollDown, "scrollDown"},
-			{historyView, 'l', gocui.ModNone, t.scrollDown, "scrollDown"},
-			{historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp, "cursorUp"},
-			{historyView, 'k', gocui.ModNone, t.cursorUp, "cursorUp"},
-			{historyView, gocui.KeyArrowLeft, gocui.ModNone, t.scrollUp, "scrollUp"},
-			{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
-			{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
-		}
 		for _, binding := range keybindings {
-			if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
-				log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
+			if binding.View == historyView {
+				if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
+					log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
+				}
 			}
 		}
 		if _, err := t.SetCurrentView(historyView); err != nil {
@@ -263,10 +274,14 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		v.Editor = gocui.DefaultEditor
 		v.Title = preEditViewTitle
 
-		if err := t.SetKeybinding(editView, gocui.KeyEnter, gocui.ModNone, t.sendReply); err != nil {
-			log.Println("Failed registering cursorUp keystroke handler", err)
+		for _, binding := range keybindings {
+			if binding.View == editView {
+				if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
+					log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
+				}
+				log.Printf("registered binding for %s", binding.HandlerName)
+			}
 		}
-
 	}
 
 	return nil
