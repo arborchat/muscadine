@@ -91,7 +91,8 @@ func (h HistoryState) RenderMessage(message *arbor.ChatMessage) []byte {
 // writer should be empty when it is invoked.
 func (h HistoryState) Render(target io.Writer) error {
 	// ensure we're only working with the maximum number of messages to fill the screen
-	renderableHist := lastNElems(h.History, h.renderHeight)
+	//	renderableHist := lastNElems(h.History, h.renderHeight)
+	renderableHist := h.History
 	rendered := make([][]byte, h.renderHeight)
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
@@ -114,7 +115,7 @@ func (h *HistoryState) New(message *arbor.ChatMessage) error {
 		defer close(done)
 		h.History = append(h.History, message)
 		// ensure the new message is in the proper place
-		sort.Slice(h.History, func(i, j int) bool {
+		sort.SliceStable(h.History, func(i, j int) bool {
 			return h.History[i].Timestamp < h.History[j].Timestamp
 		})
 		if h.current == "" {
