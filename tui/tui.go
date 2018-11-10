@@ -269,7 +269,6 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 				if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
 					log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
 				}
-				log.Printf("registered binding for %s", binding.HandlerName)
 			}
 		}
 	}
