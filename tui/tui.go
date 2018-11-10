@@ -131,7 +131,7 @@ func (t *TUI) scrollDown(c *gocui.Gui, v *gocui.View) error {
 	currentX, currentY := v.Origin()
 	maxY := t.histState.Height()
 	_, viewHeight := v.Size()
-	if currentY < (maxY - viewHeight - 2) {
+	if currentY < (maxY - viewHeight) {
 		return v.SetOrigin(currentX, currentY+1)
 	}
 	return nil
