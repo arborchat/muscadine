@@ -2,6 +2,7 @@ package tui
 
 import (
 	"log"
+	"sync"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/jroimartin/gocui"
@@ -19,6 +20,7 @@ type TUI struct {
 	messages  chan *arbor.ChatMessage
 	sendChan  chan<- *arbor.ProtocolMessage
 	histState *HistoryState
+	init      sync.Once
 	editMode  bool
 }
 
@@ -128,8 +130,9 @@ func (t *TUI) cursorUp(c *gocui.Gui, v *gocui.View) error {
 // scrollDown attempts to move the view downwards through the history.
 func (t *TUI) scrollDown(c *gocui.Gui, v *gocui.View) error {
 	currentX, currentY := v.Origin()
-	maxY := len(v.BufferLines())
-	if currentY < maxY {
+	maxY := t.histState.Height()
+	_, viewHeight := v.Size()
+	if currentY < (maxY - viewHeight - 1) {
 		return v.SetOrigin(currentX, currentY+1)
 	}
 	return nil
@@ -224,7 +227,6 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 			return err
 		}
 		histView.Title = "Chat History"
-		histView.Wrap = true
 
 		keybindings := []struct {
 			View        string
@@ -258,7 +260,6 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 			log.Println("Error creating editView", err)
 		}
 		v.Editable = true
-		v.Wrap = true
 		v.Editor = gocui.DefaultEditor
 		v.Title = preEditViewTitle
 

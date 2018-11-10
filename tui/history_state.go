@@ -3,8 +3,10 @@ package tui
 import (
 	"io"
 	"sort"
+	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
+	runewidth "github.com/mattn/go-runewidth"
 )
 
 // HistoryState maintains the state of what is visible in the client and
@@ -15,6 +17,7 @@ type HistoryState struct {
 	// recent.
 	History                   []*arbor.ChatMessage
 	renderWidth, renderHeight int
+	historyHeight             int
 	current                   string
 	currentIndex              int
 	changeFuncs               chan func()
@@ -72,40 +75,61 @@ func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 // The important thing to note is that lines are broken at the same place and that
 // subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
 // as a byte slice.
-func (h HistoryState) RenderMessage(message *arbor.ChatMessage) []byte {
+func (h HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
 	const separator = ": "
-
-	text := message.Content
-	if len(text) > 0 && text[len(text)-1] != '\n' {
-		text += "\n"
+	usernameWidth := runewidth.StringWidth(message.Username)
+	separatorWidth := runewidth.StringWidth(separator)
+	firstLinePrefix := message.Username + separator
+	otherLinePrefix := strings.Repeat(" ", usernameWidth+separatorWidth)
+	messageRenderWidth := width - (usernameWidth + separatorWidth)
+	outputLines := make([][]byte, 1)
+	wrapped := runewidth.Wrap(message.Content, messageRenderWidth)
+	wrappedLines := strings.SplitAfter(wrapped, "\n")
+	//ensure last line ends with newline
+	lastLine := wrappedLines[len(wrappedLines)-1]
+	if (len(lastLine) > 0 && lastLine[len(lastLine)-1] != '\n') || len(lastLine) == 0 {
+		wrappedLines[len(wrappedLines)-1] = lastLine + "\n"
 	}
 	if h.Current() == message.UUID {
-		text = CurrentColor + text + ClearColor
+		wrappedLines[0] = CurrentColor + wrappedLines[0]
+		wrappedLines[len(wrappedLines)-1] += ClearColor
 	}
-	text = message.Username + separator + text
-	return []byte(text)
+	outputLines[0] = []byte(firstLinePrefix + wrappedLines[0])
+	for i := 1; i < len(wrappedLines); i++ {
+		outputLines = append(outputLines, []byte(otherLinePrefix+wrappedLines[i]))
+	}
+	return outputLines
 }
 
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.
-func (h HistoryState) Render(target io.Writer) error {
+func (h *HistoryState) Render(target io.Writer) error {
 	// ensure we're only working with the maximum number of messages to fill the screen
 	//	renderableHist := lastNElems(h.History, h.renderHeight)
 	renderableHist := h.History
-	rendered := make([][]byte, h.renderHeight)
+	renderedHistLines := make([][]byte, 0, h.renderHeight) // ensure starting len is zero
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
-		rendered = append(rendered, h.RenderMessage(message))
+		lines := h.RenderMessage(message, h.renderWidth)
+		renderedHistLines = append(renderedHistLines, lines...)
 	}
+	// find the lines that will actually be visible in the rendered area
+	//	renderedHistLines = lastNElemsBytes(renderedHistLines, h.renderHeight)
 	// draw the lines that are visible to the screen
-	for _, line := range rendered {
+	for _, line := range renderedHistLines {
 		_, err := target.Write(line)
 		if err != nil {
 			return err
 		}
 	}
+	h.historyHeight = len(renderedHistLines)
 	return nil
+}
+
+// Height returns the number of lines of text rendered in the last render.
+func (h *HistoryState) Height() int {
+	return h.historyHeight
 }
 
 // New alerts the HistoryState of a newly received message.
