@@ -89,7 +89,6 @@ func errorIfNotPrefix(t *testing.T, prefix, actual, message string) {
 // TestRenderMessage ensures that the rendering function correctly handles line wrapping
 // and related problems when preparing messages to be displayed.
 func TestRenderMessage(t *testing.T) {
-	hist := historyStateOrSkip(t)
 	message := testMsg
 	message.Content = "let's use a ลาญฤๅเข่นฆ่าบีฑ much longer string いろはにほへとちりぬるを so that line wrapping アサキユメミシhappens"
 	separator := ": "
@@ -100,7 +99,7 @@ func TestRenderMessage(t *testing.T) {
 	prefixWidth := runewidth.StringWidth(prefix)
 	startingWidth := usernameWidth + contentWidth + separatorWidth
 	// test that it all fits on one line given sufficient space
-	rendered := hist.RenderMessage(&message, startingWidth)
+	rendered := tui.RenderMessage(&message, startingWidth, tui.CurrentColor, tui.ClearColor)
 	errorIfNil(t, rendered, "Render produced nil output for 1 line message")
 
 	if len(rendered) < 1 || len(rendered) > 1 {
@@ -113,7 +112,7 @@ func TestRenderMessage(t *testing.T) {
 	// content to be displayed
 	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i-- {
 		collect := ""
-		rendered := hist.RenderMessage(&message, i)
+		rendered := tui.RenderMessage(&message, i, "", "")
 		errorIfNil(t, rendered, fmt.Sprintf("Render produced nil for %d width message", i))
 		for index, line := range rendered {
 			if index == 0 {
@@ -161,21 +160,18 @@ func newOrSkip(t *testing.T, hist *tui.HistoryState, msg *arbor.ChatMessage) {
 	}
 }
 
-// TestRenderSelectMessage ensures that the current message in a HistoryState is rendered in a different
-// color.
-func TestRenderSelectMessage(t *testing.T) {
-	hist := historyStateOrSkip(t)
+// TestRenderColoredMessage ensures that the render function uses the colors it is provided to render messages.
+func TestRenderColoredMessage(t *testing.T) {
 	message := testMsg
-	newOrSkip(t, hist, &message)
-	rendered := hist.RenderMessage(&message, 80)
+	rendered := tui.RenderMessage(&message, 80, tui.CurrentColor, tui.ClearColor)
 	if !strings.Contains(string(rendered[0]), tui.CurrentColor) && !strings.Contains(string(rendered[0]), tui.ClearColor) {
-		t.Error("Expected current message to be rendered in color", string(rendered[0]))
+		t.Error("Expected current message to be rendered in color CurrentColor", string(rendered[0]))
 	}
 	second := testMsg
 	second.UUID = "different"
-	rendered = hist.RenderMessage(&second, 80)
-	if strings.Contains(string(rendered[0]), tui.CurrentColor) || strings.Contains(string(rendered[0]), tui.ClearColor) {
-		t.Error("Did not expect non-current message to be rendered in color", string(rendered[0]))
+	rendered = tui.RenderMessage(&second, 80, tui.AncestorColor, tui.ClearColor)
+	if !strings.Contains(string(rendered[0]), tui.AncestorColor) && !strings.Contains(string(rendered[0]), tui.ClearColor) {
+		t.Error("Expected message to be rendered in color AncestorColor", string(rendered[0]))
 	}
 }
 
@@ -187,11 +183,11 @@ func TestRenderEmptyMessage(t *testing.T) {
 	message := testMsg
 	message.Content = ""
 	// making sure that we don't crash
-	hist.RenderMessage(&message, 80)
+	tui.RenderMessage(&message, 80, "", "")
 
 	// now check that we correctly render messages with a trailing newline
 	message.Content = "\n"
-	rendered := hist.RenderMessage(&message, 80)
+	rendered := tui.RenderMessage(&message, 80, "", "")
 	if !strings.HasSuffix(string(rendered[len(rendered)-1]), "\n") {
 		t.Errorf("Should have inserted newline at end of empty rendered message line, found %v", rendered)
 	}

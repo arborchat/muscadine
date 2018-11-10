@@ -26,9 +26,14 @@ type HistoryState struct {
 const (
 	defaultHistoryCapacity = 1000
 	defaultHistoryLength   = 0
+	red                    = "\x1b[0;31m"
+	yellow                 = "\x1b[0;33m"
 	// CurrentColor is the ANSI escape sequence for the color that is used to highlight
-	// the currently-selected mesage
-	CurrentColor = "\x1b[0;31m"
+	// the currently-selected message
+	CurrentColor = red
+	// AncestorColor is the ANSI escape sequence for the color that is use to highlight
+	// the ancestors of the currently-selected message
+	AncestorColor = yellow
 	// ClearColor is the ANSI escape sequence to return to the default color
 	ClearColor = "\x1b[0;0m"
 )
@@ -75,7 +80,7 @@ func lastNElemsBytes(slice [][]byte, n int) [][]byte {
 // The important thing to note is that lines are broken at the same place and that
 // subsequent lines are padded with runewidth(username)+2 spaces. Each row of output is returned
 // as a byte slice.
-func (h HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]byte {
+func RenderMessage(message *arbor.ChatMessage, width int, colorPre string, colorPost string) [][]byte {
 	const separator = ": "
 	usernameWidth := runewidth.StringWidth(message.Username)
 	separatorWidth := runewidth.StringWidth(separator)
@@ -90,10 +95,8 @@ func (h HistoryState) RenderMessage(message *arbor.ChatMessage, width int) [][]b
 	if (len(lastLine) > 0 && lastLine[len(lastLine)-1] != '\n') || len(lastLine) == 0 {
 		wrappedLines[len(wrappedLines)-1] = lastLine + "\n"
 	}
-	if h.Current() == message.UUID {
-		wrappedLines[0] = CurrentColor + wrappedLines[0]
-		wrappedLines[len(wrappedLines)-1] += ClearColor
-	}
+	wrappedLines[0] = colorPre + wrappedLines[0]
+	wrappedLines[len(wrappedLines)-1] += colorPost
 	outputLines[0] = []byte(firstLinePrefix + wrappedLines[0])
 	for i := 1; i < len(wrappedLines); i++ {
 		outputLines = append(outputLines, []byte(otherLinePrefix+wrappedLines[i]))
@@ -109,9 +112,17 @@ func (h *HistoryState) Render(target io.Writer) error {
 	//	renderableHist := lastNElems(h.History, h.renderHeight)
 	renderableHist := h.History
 	renderedHistLines := make([][]byte, 0, h.renderHeight) // ensure starting len is zero
+	var colorPre, colorPost string
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
-		lines := h.RenderMessage(message, h.renderWidth)
+		if message.UUID == h.current {
+			colorPre = CurrentColor
+			colorPost = ClearColor
+		} else {
+			colorPre = ""
+			colorPost = ""
+		}
+		lines := RenderMessage(message, h.renderWidth, colorPre, colorPost)
 		renderedHistLines = append(renderedHistLines, lines...)
 	}
 	// find the lines that will actually be visible in the rendered area
