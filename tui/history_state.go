@@ -104,6 +104,23 @@ func RenderMessage(message *arbor.ChatMessage, width int, colorPre string, color
 	return outputLines
 }
 
+// currentAncestors returns the ancestor ids for the HistoryState's currently-selected
+// message.
+func (h *HistoryState) currentAncestors() []string {
+	ancestors := make([]string, 0)
+	if len(h.History) < 2 {
+		return ancestors
+	}
+	parent := h.History[h.currentIndex].Parent
+	for i := h.currentIndex - 1; i >= 0; i-- {
+		if h.History[i].UUID == parent {
+			ancestors = append(ancestors, h.History[i].UUID)
+			parent = h.History[i].Parent
+		}
+	}
+	return ancestors
+}
+
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.
@@ -112,6 +129,7 @@ func (h *HistoryState) Render(target io.Writer) error {
 	//	renderableHist := lastNElems(h.History, h.renderHeight)
 	renderableHist := h.History
 	renderedHistLines := make([][]byte, 0, h.renderHeight) // ensure starting len is zero
+	ancestors := h.currentAncestors()
 	var colorPre, colorPost string
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
@@ -121,6 +139,14 @@ func (h *HistoryState) Render(target io.Writer) error {
 		} else {
 			colorPre = ""
 			colorPost = ""
+		colorize:
+			for _, id := range ancestors {
+				if id == message.UUID {
+					colorPre = AncestorColor
+					colorPost = ClearColor
+					break colorize
+				}
+			}
 		}
 		lines := RenderMessage(message, h.renderWidth, colorPre, colorPost)
 		renderedHistLines = append(renderedHistLines, lines...)
