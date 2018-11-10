@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"io"
 	"log"
 	"net"
@@ -84,13 +85,16 @@ func (c *Composer) Query(id string) {
 
 func main() {
 	var (
-		ui  UI
-		err error
+		ui       UI
+		err      error
+		username string
 	)
-	if len(os.Args) < 2 {
+	flag.StringVar(&username, "username", "muscadine", "Set your username on the server")
+	flag.Parse()
+	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: " + os.Args[0] + " <ip>:<port>")
 	}
-	conn, err := net.Dial("tcp", os.Args[1])
+	conn, err := net.Dial("tcp", flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -98,6 +102,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	client.username = username
 	ui, err = tui.NewTUI(client)
 	if err != nil {
 		log.Fatal(err)
