@@ -228,6 +228,7 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		{historyView, gocui.KeyArrowLeft, gocui.ModNone, t.scrollUp, "scrollUp"},
 		{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
 		{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
+		{historyView, 'i', gocui.ModNone, t.composeReply, "composeReply"},
 		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
 		{editView, gocui.KeyEsc, gocui.ModNone, t.cancelReply, "cancelReply"},
 	}
