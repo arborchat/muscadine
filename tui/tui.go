@@ -25,9 +25,10 @@ type TUI struct {
 	done     chan struct{}
 	messages chan *arbor.ChatMessage
 	Composer
-	histState *HistoryState
-	init      sync.Once
-	editMode  bool
+	histState      *HistoryState
+	init           sync.Once
+	editMode       bool
+	lastKnownWidth int
 }
 
 // NewTUI creates a new terminal user interface. The provided channel will be
@@ -237,11 +238,17 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 	histMaxY := mY - 1
 	histMaxY -= 3
 	t.histState.SetDimensions(histMaxY-1, histMaxX-1)
+	if t.lastKnownWidth != mX {
+		t.reRender()
+	}
+	t.lastKnownWidth = mX
+	// update view dimensions or create for the first time
 	histView, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+		// if you reach this point, you are initializing the view for the first time
 		histView.Title = "Chat History"
 
 		for _, binding := range keybindings {
@@ -256,10 +263,12 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		}
 	}
 
+	// update view dimensions or create for the first time
 	if v, err := gui.SetView(editView, 0, histMaxY+1, histMaxX, mY-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			log.Println("Error creating editView", err)
 		}
+		// if you reach this point, you are initializing the view for the first time
 		v.Editable = true
 		v.Editor = gocui.DefaultEditor
 		v.Title = preEditViewTitle
