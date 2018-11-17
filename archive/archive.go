@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/multiformats/go-multicodec/json"
 )
 
 // Archive stores the chat history of conversations had over Arbor.
@@ -80,7 +81,9 @@ func (a *Archive) Persist(storage io.Writer) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to persist to nil")
 	}
-	return nil
+	mc := mc_json.Multicodec(false)
+	encoder := mc.Encoder(storage)
+	return encoder.Encode(a.chronological)
 }
 
 // Load reads messages from the io.Reader. It expects those messages to be
@@ -94,5 +97,7 @@ func (a *Archive) Load(storage io.Reader) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to load from nil")
 	}
-	return nil
+	mc := mc_json.Multicodec(false)
+	decoder := mc.Decoder(storage)
+	return decoder.Decode(&a.chronological)
 }
