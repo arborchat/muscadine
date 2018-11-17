@@ -1,6 +1,7 @@
 package archive_test
 
 import (
+	"bytes"
 	"testing"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -114,5 +115,50 @@ func TestLast(t *testing.T) {
 	}
 	if last := a.Last(maliciousLen); len(last) != 0 {
 		t.Errorf("non-Empty archive returned non-empty slice when length was %d", maliciousLen)
+	}
+}
+
+// TestLoadPersist ensures that an Archive can load and store messages reliably.
+func TestLoadPersist(t *testing.T) {
+	a := newOrSkip(t)
+	if err := a.Persist(nil); err == nil {
+		t.Error("Archive failed to return error when asked to persist to nil")
+	}
+	if err := a.Load(nil); err == nil {
+		t.Error("Archive failed to return error when asked to load to nil")
+	}
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	message2 := message
+	message2.UUID += "2"
+	message2.Timestamp += 6
+	message3 := message
+	message3.UUID += "3"
+	message3.Timestamp -= 30
+	addOrSkip(t, a, &message)
+	addOrSkip(t, a, &message2)
+	addOrSkip(t, a, &message3)
+	buf := new(bytes.Buffer)
+	if err := a.Persist(buf); err != nil {
+		t.Error("Unable to persist messages to in-memory buffer", err)
+	}
+	a2 := newOrSkip(t)
+	if err := a2.Load(buf); err != nil {
+		t.Error("Unable to load message from in-memory buffer", err)
+	}
+	hist1 := a.Last(10)
+	hist2 := a2.Last(10)
+	if len(hist1) != len(hist2) {
+		t.Error("Loaded and persisted history have different lengths")
+	}
+	for i, m1 := range hist1 {
+		if len(hist2) > i && !m1.Equals(hist2[i]) {
+			t.Error("Persisted and loaded history have different contents")
+		}
 	}
 }

@@ -77,6 +77,9 @@ func (a *Archive) Add(message *arbor.ChatMessage) error {
 // This will always persist the entire contents of the archive, even if
 // the archive contents were loaded from more than one source.
 func (a *Archive) Persist(storage io.Writer) error {
+	if storage == nil {
+		return fmt.Errorf("Unable to persist to nil")
+	}
 	return nil
 }
 
@@ -88,5 +91,8 @@ func (a *Archive) Persist(storage io.Writer) error {
 // when possible. Conflicting data (multiple different messages with the same
 // ID) will cause an error.
 func (a *Archive) Load(storage io.Reader) error {
+	if storage == nil {
+		return fmt.Errorf("Unable to load from nil")
+	}
 	return nil
 }
