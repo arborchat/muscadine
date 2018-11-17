@@ -25,7 +25,13 @@ func New() *Archive {
 // archive. The length of the returned slice may be shorter than `n` if `n`
 // is greater than the number of known messages.
 func (a *Archive) Last(n int) []*arbor.ChatMessage {
-	return nil
+	if n <= 0 {
+		return make([]*arbor.ChatMessage, 0)
+	}
+	if n >= len(a.chronological) {
+		return a.chronological
+	}
+	return a.chronological[len(a.chronological)-n:]
 }
 
 // Has returns whether the archive contains a message with the given ID.
