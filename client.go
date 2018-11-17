@@ -8,6 +8,7 @@ import (
 	"os"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
 )
 
@@ -94,6 +95,7 @@ func main() {
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: " + os.Args[0] + " <ip>:<port>")
 	}
+	history := archive.New()
 	conn, err := net.Dial("tcp", flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
@@ -103,7 +105,7 @@ func main() {
 		log.Fatal(err)
 	}
 	client.username = username
-	ui, err = tui.NewTUI(client)
+	ui, err = tui.NewTUI(client, history)
 	if err != nil {
 		log.Fatal(err)
 	}
