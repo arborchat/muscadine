@@ -13,12 +13,6 @@ const editView = "edit"
 const preEditViewTitle = "Arrows to select, hit enter to reply"
 const midEditViewTitle = "Type your reply, hit enter to send"
 
-// Composer writes and sends protocol messages
-type Composer interface {
-	Reply(string, string) error
-	Query(string)
-}
-
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
 	*gocui.Gui
@@ -33,13 +27,13 @@ type TUI struct {
 
 // NewTUI creates a new terminal user interface. The provided channel will be
 // used to relay any protocol messages initiated by the TUI.
-func NewTUI(composer Composer) (*TUI, error) {
+func NewTUI(composer Composer, archive Archive) (*TUI, error) {
 	gui, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		return nil, err
 	}
 	gui.InputEsc = true
-	hs, err := NewHistoryState()
+	hs, err := NewHistoryState(archive)
 	if err != nil {
 		return nil, err
 	}

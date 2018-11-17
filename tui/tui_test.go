@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
 	runewidth "github.com/mattn/go-runewidth"
 )
@@ -22,7 +23,10 @@ var testMsg = arbor.ChatMessage{
 // TestHistoryState ensures that HistoryStates can be created and that they
 // write the correct output whenever instructed to Render.
 func TestHistoryState(t *testing.T) {
-	hist, err := tui.NewHistoryState()
+	if _, err := tui.NewHistoryState(nil); err == nil {
+		t.Error("Should fail to create HistoryState if nil archive provided")
+	}
+	hist, err := tui.NewHistoryState(archive.New())
 	if err != nil {
 		t.Error("Should have been able to construct HistoryState with valid params", err)
 	}
@@ -66,7 +70,7 @@ func TestHistoryState(t *testing.T) {
 }
 
 func historyStateOrSkip(t *testing.T) *tui.HistoryState {
-	hist, err := tui.NewHistoryState()
+	hist, err := tui.NewHistoryState(archive.New())
 	if err != nil {
 		t.Skip("Should have been able to construct HistoryState with valid params", err)
 	}

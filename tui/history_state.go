@@ -1,8 +1,8 @@
 package tui
 
 import (
+	"fmt"
 	"io"
-	"sort"
 	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -15,7 +15,8 @@ type HistoryState struct {
 	// history represents chat messages in the order in which they were received.
 	// Index 0 holds the oldes messages, and the highest valid index holds the most
 	// recent.
-	History                   []*arbor.ChatMessage
+	History []*arbor.ChatMessage
+	Archive
 	renderWidth, renderHeight int
 	historyHeight             int
 	current                   string
@@ -39,9 +40,13 @@ const (
 )
 
 // NewHistoryState creates an empty HistoryState ready to be updated.
-func NewHistoryState() (*HistoryState, error) {
+func NewHistoryState(a Archive) (*HistoryState, error) {
+	if a == nil {
+		return nil, fmt.Errorf("Cannot create HistoryState will nil Archive")
+	}
 	h := &HistoryState{
 		History:     make([]*arbor.ChatMessage, defaultHistoryLength, defaultHistoryCapacity),
+		Archive:     a,
 		changeFuncs: make(chan func()),
 	}
 	// launch a goroutine to serially execute all state modifications
@@ -174,11 +179,8 @@ func (h *HistoryState) New(message *arbor.ChatMessage) error {
 	done := make(chan error)
 	h.changeFuncs <- func() {
 		defer close(done)
-		h.History = append(h.History, message)
-		// ensure the new message is in the proper place
-		sort.SliceStable(h.History, func(i, j int) bool {
-			return h.History[i].Timestamp < h.History[j].Timestamp
-		})
+		h.Archive.Add(message)
+		h.History = h.Archive.Last(defaultHistoryCapacity)
 		if h.current == "" {
 			h.current = message.UUID
 		}
