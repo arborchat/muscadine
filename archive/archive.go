@@ -1,7 +1,9 @@
 package archive
 
 import (
+	"fmt"
 	"io"
+	"sort"
 
 	arbor "github.com/arborchat/arbor-go"
 )
@@ -12,9 +14,11 @@ type Archive struct {
 	chronological []*arbor.ChatMessage
 }
 
+const defaultCapacity = 1024
+
 // New creates an empty archive. Use Load() or Add() to populate with data.
 func New() *Archive {
-	return nil
+	return &Archive{chronological: make([]*arbor.ChatMessage, 0, defaultCapacity)}
 }
 
 // Last returns the most chronologically "recent" `n` messages known to the
@@ -26,17 +30,40 @@ func (a *Archive) Last(n int) []*arbor.ChatMessage {
 
 // Has returns whether the archive contains a message with the given ID.
 func (a *Archive) Has(id string) bool {
+	for _, message := range a.chronological {
+		if message.UUID == id {
+			return true
+		}
+	}
 	return false
 }
 
 // Get returns the message with the given id, or nil if the message is
 // not in the archive.
 func (a *Archive) Get(id string) *arbor.ChatMessage {
+	for _, message := range a.chronological {
+		if message.UUID == id {
+			return message
+		}
+	}
 	return nil
+}
+
+// sort updates the internal representation to ensure that messages are ordered
+// correctly.
+func (a *Archive) sort() {
+	sort.SliceStable(a.chronological, func(i, j int) bool {
+		return a.chronological[i].Timestamp < a.chronological[j].Timestamp
+	})
 }
 
 // Add adds the provided message to the archive.
 func (a *Archive) Add(message *arbor.ChatMessage) error {
+	if message == nil {
+		return fmt.Errorf("Unable to add nil message")
+	}
+	a.chronological = append(a.chronological, message)
+	a.sort()
 	return nil
 }
 
