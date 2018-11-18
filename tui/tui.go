@@ -131,6 +131,19 @@ func (t *TUI) scrollDown(c *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+// scrollBottom attempts to move the view to the end of the history.
+func (t *TUI) scrollBottom(c *gocui.Gui, v *gocui.View) error {
+	currentX, currentY := v.Origin()
+	_, viewHeight := v.Size()
+	maxY := t.histState.Height()
+	t.histState.CursorEnd()
+	t.reRender()
+	if currentY < (maxY - 1) {
+		return v.SetOrigin(currentX, maxY-viewHeight)
+	}
+	return nil
+}
+
 // scrollUp attempts to move the view upwards through the history.
 func (t *TUI) scrollUp(c *gocui.Gui, v *gocui.View) error {
 	currentX, currentY := v.Origin()
@@ -138,6 +151,14 @@ func (t *TUI) scrollUp(c *gocui.Gui, v *gocui.View) error {
 		return v.SetOrigin(currentX, currentY-1)
 	}
 	return nil
+}
+
+// scrollTop jumps to the top of the history.
+func (t *TUI) scrollTop(c *gocui.Gui, v *gocui.View) error {
+	currentX, _ := v.Origin()
+	t.histState.CursorBeginning()
+	t.reRender()
+	return v.SetOrigin(currentX, 0)
 }
 
 // reRender forces a redraw of the historyView
@@ -224,6 +245,10 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
 		{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
 		{historyView, 'i', gocui.ModNone, t.composeReply, "composeReply"},
+		{historyView, gocui.KeyHome, gocui.ModNone, t.scrollTop, "scrollTop"},
+		{historyView, 'g', gocui.ModNone, t.scrollTop, "scrollTop"},
+		{historyView, gocui.KeyEnd, gocui.ModNone, t.scrollBottom, "scrollBottom"},
+		{historyView, 'G', gocui.ModNone, t.scrollBottom, "scrollBottom"},
 		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
 		{editView, gocui.KeyEsc, gocui.ModNone, t.cancelReply, "cancelReply"},
 	}

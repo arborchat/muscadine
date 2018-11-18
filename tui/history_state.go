@@ -234,6 +234,21 @@ func (h *HistoryState) CursorDown() {
 	<-done
 }
 
+// CursorEnd moves the current message to the end of the history.
+func (h *HistoryState) CursorEnd() {
+	done := make(chan error)
+	h.changeFuncs <- func() {
+		defer close(done)
+		if len(h.History) < 2 {
+			// couldn't possibly scroll the cursor, 0 or 1 messages available
+			return
+		}
+		h.current = h.History[len(h.History)-1].UUID
+		h.currentIndex = len(h.History) - 1
+	}
+	<-done
+}
+
 // CursorUp moves the current message upward within the history, if it is possible to do
 // so. If there are no messages in the history, it does nothing. If the current message is
 // at the top of the history, it does nothing.
@@ -251,6 +266,21 @@ func (h *HistoryState) CursorUp() {
 		}
 		h.current = h.History[h.currentIndex-1].UUID
 		h.currentIndex--
+	}
+	<-done
+}
+
+// CursorBeginning moves the current message to the beginning of the history.
+func (h *HistoryState) CursorBeginning() {
+	done := make(chan error)
+	h.changeFuncs <- func() {
+		defer close(done)
+		if len(h.History) < 2 {
+			// couldn't possibly scroll the cursor, 0 or 1 messages available
+			return
+		}
+		h.current = h.History[0].UUID
+		h.currentIndex = 0
 	}
 	<-done
 }
