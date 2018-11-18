@@ -69,7 +69,13 @@ func (a *Archive) Add(message *arbor.ChatMessage) error {
 	if message == nil {
 		return fmt.Errorf("Unable to add nil message")
 	}
-	a.chronological = append(a.chronological, message)
+	if a.Has(message.UUID) {
+		// don't attempt to add messages that are already present.
+		// has the nice side-effect of preventing collisions.
+		return nil
+	}
+	messageCopy := *message
+	a.chronological = append(a.chronological, &messageCopy)
 	a.sort()
 	return nil
 }
@@ -92,12 +98,38 @@ func (a *Archive) Persist(storage io.Writer) error {
 // is legal to call Load() more than once to load the contents of more than
 // one io.Reader into the Archive. This will always be performed nondestructively
 // when possible. Conflicting data (multiple different messages with the same
-// ID) will cause an error.
+// ID) will cause an error. All data from a source containing a conflict will
+// be rejected, so io.Readers loaded first take precedence.
 func (a *Archive) Load(storage io.Reader) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to load from nil")
 	}
 	mc := mc_json.Multicodec(false)
 	decoder := mc.Decoder(storage)
-	return decoder.Decode(&a.chronological)
+	if len(a.chronological) < 1 {
+		return decoder.Decode(&a.chronological)
+	}
+	// otherwise, we need to merge the contents with what's already in a.chronological
+	newMessages := make([]*arbor.ChatMessage, 0, defaultCapacity)
+	if err := decoder.Decode(&newMessages); err != nil {
+		return err
+	}
+	// ensure no bad data
+	for _, message := range newMessages {
+		if msg := a.Get(message.UUID); msg != nil {
+			if !msg.Equals(message) {
+				// we have discovered two messages with the same ID but
+				// different contents. Reject all messages from the current
+				// Reader.
+				return fmt.Errorf("ID Collision for UUID \"%s\"", message.UUID)
+			}
+		}
+	}
+	// if we get here, no ID conflicts were discovered
+	for _, message := range newMessages {
+		if err := a.Add(message); err != nil {
+			return err
+		}
+	}
+	return nil
 }

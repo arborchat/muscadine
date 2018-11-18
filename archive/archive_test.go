@@ -59,8 +59,16 @@ func TestAddHasGet(t *testing.T) {
 	}
 	if m := a.Get(message.UUID); m == nil {
 		t.Error("After adding message, Get() returned nil for that message")
-	} else if m.UUID != message.UUID || m.Content != message.Content || m.Parent != message.Parent || m.Username != message.Username || m.Timestamp != message.Timestamp {
+	} else if !m.Equals(&message) {
 		t.Errorf("Added %v, but got non-equal %v from Get()", message, m)
+	}
+	messageConflict := message
+	messageConflict.Content = "contentious"
+	if err := a.Add(&messageConflict); err != nil {
+		t.Skipf("Skipped adding conflicting message")
+	}
+	if a.Get(messageConflict.UUID).Content == messageConflict.Content {
+		t.Error("Adding a conflicting message overwrote the existing message")
 	}
 }
 
@@ -92,8 +100,8 @@ func TestLast(t *testing.T) {
 	if last := a.Last(maliciousLen); len(last) != 0 {
 		t.Errorf("Empty archive returned non-empty slice when length was %d", maliciousLen)
 	}
-	for index, m := range []arbor.ChatMessage{message, message2, message3} {
-		addOrSkip(t, a, &m)
+	for index, m := range []*arbor.ChatMessage{&message, &message2, &message3} {
+		addOrSkip(t, a, m)
 		if last := a.Last(histLen); len(last) != index+1 {
 			t.Errorf("archive with %d element(s) returned slice with length %d", index+1, len(last))
 		} else {
@@ -116,6 +124,9 @@ func TestLast(t *testing.T) {
 	}
 	if last := a.Last(maliciousLen); len(last) != 0 {
 		t.Errorf("non-Empty archive returned non-empty slice when length was %d", maliciousLen)
+	}
+	if messagePointer := a.Get(message.UUID); messagePointer == &message {
+		t.Errorf("Add should copy provided data to prevent internal structures from unexpected modification")
 	}
 }
 
