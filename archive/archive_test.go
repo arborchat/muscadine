@@ -2,6 +2,7 @@ package archive_test
 
 import (
 	"bytes"
+	"io"
 	"testing"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -160,5 +161,61 @@ func TestLoadPersist(t *testing.T) {
 		if len(hist2) > i && !m1.Equals(hist2[i]) {
 			t.Error("Persisted and loaded history have different contents")
 		}
+	}
+}
+
+func persistOrSkip(t *testing.T, m *arbor.ChatMessage) io.Reader {
+	a := newOrSkip(t)
+	buf := new(bytes.Buffer)
+	if err := a.Add(m); err != nil {
+		t.Skip("Unable to add message to archive", err)
+	}
+	if err := a.Persist(buf); err != nil {
+		t.Skip("Unable to persist into buffer", err)
+	}
+	return buf
+}
+
+// TestLoadPersistMultiple ensures that an Archive can load messages from
+// multiple sources. It checks that the data is unioned together unless
+// there is a conflict (single ID for multiple different messages), in
+// which case it rejects the source that generated the conflict.
+func TestLoadPersistMultiple(t *testing.T) {
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	message2 := message
+	message2.UUID += "2"
+	message2.Timestamp += 6
+	message3 := message
+	message3.UUID += "3"
+	message3.Timestamp -= 30
+	messageBad := message
+	messageBad.Content = "I'm the wrong one"
+	// load three buffers with three different messages
+	b1 := persistOrSkip(t, &message)
+	b2 := persistOrSkip(t, &message2)
+	b3 := persistOrSkip(t, &message3)
+	a := newOrSkip(t)
+	for _, buf := range []io.Reader{b1, b2, b3} {
+		if err := a.Load(buf); err != nil {
+			t.Error("Error loading from buffer", err)
+		}
+	}
+	for _, msg := range []arbor.ChatMessage{message, message2, message3} {
+		if !a.Has(msg.UUID) {
+			t.Errorf("After loading all messages, \"%s\" is missing", msg.UUID)
+		}
+	}
+	bBad := persistOrSkip(t, &messageBad)
+	if err := a.Load(bBad); err == nil {
+		t.Error("Failed to generate error when loading buffer with ID conflict")
+	}
+	if a.Get(messageBad.UUID).Content == messageBad.Content {
+		t.Error("Message with ID conflict should not have replaced original message")
 	}
 }
