@@ -48,6 +48,8 @@ The keybindings are:
     - up/down/j/k - scroll the selected message up and down (not that this currently does not scroll the viewport)
     - left/right/h/l - scroll the viewport up and down
     - enter/i - start a reply to the selected message
+    - home/g - jump to top of history
+    - end/G - jump to bottom of history
 - Compose Mode:
     - enter - send your message
     - escape - return to history mode
