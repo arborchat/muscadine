@@ -84,18 +84,50 @@ func (c *Composer) Query(id string) {
 	c.sendChan <- &arbor.ProtocolMessage{Type: arbor.QueryType, ChatMessage: &arbor.ChatMessage{UUID: id}}
 }
 
+func loadHist(history tui.Archive, histfile string) {
+	if histfile != "" {
+		file, err := os.Open(histfile)
+		if err != nil {
+			log.Println("Error opening history", err)
+		} else {
+			defer file.Close()
+			if err = history.Load(file); err != nil {
+				log.Println("Error loading history", err)
+			}
+		}
+	}
+}
+func saveHist(history tui.Archive, histfile string) {
+	if histfile != "" {
+		file, err := os.OpenFile(histfile, os.O_RDWR|os.O_CREATE, 0600)
+		if err != nil {
+			log.Println("Error opening history", err)
+		} else {
+			defer file.Close()
+			if err = file.Truncate(0); err != nil {
+				log.Println("Error truncating history", err)
+			}
+			if err = history.Persist(file); err != nil {
+				log.Println("Error loading history", err)
+			}
+		}
+	}
+}
 func main() {
 	var (
 		ui       UI
 		err      error
 		username string
+		histfile string
 	)
 	flag.StringVar(&username, "username", "muscadine", "Set your username on the server")
+	flag.StringVar(&histfile, "histfile", "", "Load history from this file")
 	flag.Parse()
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: " + os.Args[0] + " <ip>:<port>")
 	}
 	history := archive.New()
+	loadHist(history, histfile)
 	conn, err := net.Dial("tcp", flag.Arg(0))
 	if err != nil {
 		log.Fatal(err)
@@ -111,4 +143,5 @@ func main() {
 	}
 	client.RecieveHandler(ui.Display)
 	ui.AwaitExit()
+	saveHist(history, histfile)
 }
