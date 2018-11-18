@@ -93,6 +93,8 @@ func loadHist(history tui.Archive, histfile string) {
 			defer file.Close()
 			if err = history.Load(file); err != nil {
 				log.Println("Error loading history", err)
+			} else {
+				log.Println("History loaded from", file.Name())
 			}
 		}
 	}
@@ -108,7 +110,9 @@ func saveHist(history tui.Archive, histfile string) {
 				log.Println("Error truncating history", err)
 			}
 			if err = history.Persist(file); err != nil {
-				log.Println("Error loading history", err)
+				log.Println("Error saving history", err)
+			} else {
+				log.Println("History saved to", file.Name())
 			}
 		}
 	}
