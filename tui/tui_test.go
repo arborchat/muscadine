@@ -3,6 +3,7 @@ package tui_test
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -43,6 +44,7 @@ func TestHistoryState(t *testing.T) {
 		t.Error("Wrote data when no messages to render")
 	}
 	for i := 1; i <= iterations; i++ {
+		testMsg.UUID += strconv.Itoa(i)
 		newOrSkip(t, hist, &testMsg)
 		b = new(bytes.Buffer)
 		err = hist.Render(b)
