@@ -109,7 +109,7 @@ func TestRenderMessage(t *testing.T) {
 	errorIfNil(t, rendered, "Render produced nil output for 1 line message")
 
 	if len(rendered) < 1 || len(rendered) > 1 {
-		t.Errorf("Expected rendered message of %d lines, got %d", 1, len(rendered))
+		t.Errorf("Expected rendered message of %d lines, got %d: %v", 1, len(rendered), rendered)
 	}
 	if string(rendered[0][:len(prefix)]) != prefix {
 		t.Errorf("Expected prefix \"%s\", got \"%s\"", prefix, rendered[0][:len(prefix)])
@@ -118,6 +118,7 @@ func TestRenderMessage(t *testing.T) {
 	// content to be displayed
 	for i := startingWidth - 1; i > usernameWidth+separatorWidth; i-- {
 		collect := ""
+		message.UUID += strconv.Itoa(i)
 		rendered := tui.RenderMessage(&message, i, "", "")
 		errorIfNil(t, rendered, fmt.Sprintf("Render produced nil for %d width message", i))
 		for index, line := range rendered {
@@ -125,6 +126,7 @@ func TestRenderMessage(t *testing.T) {
 				errorIfNotPrefix(t, prefix, string(line), fmt.Sprintf("Expected prefix \"%s\" on line %d, got \"%s\"", prefix, index, line))
 			} else {
 				errorIfNotPrefix(t, strings.Repeat(" ", prefixWidth), string(line), fmt.Sprintf("Expected line %d to start with %d spaces, found \"%s\"", index, prefixWidth, line))
+				collect += " " // all lines after the first need to have spaces added back that were removed by the softwrap
 			}
 			if line[len(line)-1] == '\n' {
 				collect += string(line[len(prefix) : len(line)-1]) // don't include trailing newline
