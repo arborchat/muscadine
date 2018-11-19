@@ -8,6 +8,7 @@ environment:
     PATH: "$PATH:$GOPATH/bin"
 tasks:
     - dependencies: |
+        mkdir -p "$GOPATH/bin"
         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
         cd muscadine
         dep ensure
