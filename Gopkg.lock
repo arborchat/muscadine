@@ -10,20 +10,20 @@
   version = "v0.1.3"
 
 [[projects]]
-  branch = "master"
-  digest = "1:c34d53c75f2916cb672a28b52f5c8b7159131a79d558ecc48847da19f380dac9"
-  name = "github.com/arborchat/muscadine"
-  packages = ["archive"]
-  pruneopts = "UT"
-  revision = "8493ef5407eb157e61c41ebc0741f258056ad317"
-
-[[projects]]
   digest = "1:18651a61ae4ba9ee396e0a2fb1882b5f69e6a5b52ee3432f4d7718496f7e857d"
   name = "github.com/bbrks/wrap"
   packages = ["."]
   pruneopts = "UT"
   revision = "e60be0e25cebe43945acf3541683f59e3029c24c"
   version = "v2.3.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b8ea2f94c66b4cb5aa3302827b9a147adfb4a98d21b75d30cc569fdbbdcd7c75"
+  name = "github.com/jordwest/mock-conn"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4896c6bd164172da9f78789f233b470a3a6fb359"
 
 [[projects]]
   digest = "1:114ecad51af93a73ae6781fd0d0bc28e52b433c852b84ab4b4c109c15e6c6b6d"
@@ -97,10 +97,11 @@
   analyzer-version = 1
   input-imports = [
     "github.com/arborchat/arbor-go",
-    "github.com/arborchat/muscadine/archive",
     "github.com/bbrks/wrap",
+    "github.com/jordwest/mock-conn",
     "github.com/jroimartin/gocui",
     "github.com/mattn/go-runewidth",
+    "github.com/multiformats/go-multicodec/json",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
