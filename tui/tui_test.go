@@ -243,18 +243,22 @@ func TestMessageSort(t *testing.T) {
 	hist := historyStateOrSkip(t)
 	hist.SetDimensions(24, 80)
 	message := testMsg
+	message.UUID += "1"
 	message.Content = "one"
 	message.Timestamp = 10
 	newOrSkip(t, hist, &message)
 	message3 := testMsg
+	message3.UUID += "3"
 	message3.Content = "three"
 	message3.Timestamp = 30
 	newOrSkip(t, hist, &message3)
 	message2 := testMsg
+	message2.UUID += "2"
 	message2.Content = "two"
 	message2.Timestamp = 20
 	newOrSkip(t, hist, &message2)
 	message0 := testMsg
+	message0.UUID += "0"
 	message0.Content = "zero"
 	message0.Timestamp = 0
 	newOrSkip(t, hist, &message0)
