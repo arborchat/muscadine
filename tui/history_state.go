@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/bbrks/wrap"
 	runewidth "github.com/mattn/go-runewidth"
 )
 
@@ -93,7 +94,9 @@ func RenderMessage(message *arbor.ChatMessage, width int, colorPre string, color
 	otherLinePrefix := strings.Repeat(" ", usernameWidth+separatorWidth)
 	messageRenderWidth := width - (usernameWidth + separatorWidth)
 	outputLines := make([][]byte, 1)
-	wrapped := runewidth.Wrap(message.Content, messageRenderWidth)
+	wrapper := wrap.NewWrapper()
+	wrapper.StripTrailingNewline = true
+	wrapped := wrapper.Wrap(message.Content, messageRenderWidth)
 	wrappedLines := strings.SplitAfter(wrapped, "\n")
 	//ensure last line ends with newline
 	lastLine := wrappedLines[len(wrappedLines)-1]
