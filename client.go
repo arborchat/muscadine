@@ -10,6 +10,7 @@ import (
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
+	"github.com/gen2brain/beeep"
 )
 
 // UI is all of the operations that an Arbor client front-end needs to support
@@ -33,6 +34,7 @@ func (c *Client) listen() {
 		case arbor.NewMessageType:
 			if c.recieveHandler != nil {
 				c.recieveHandler(m.ChatMessage)
+				beeep.Notify("Muscadine", m.ChatMessage.Content, "")
 			}
 		case arbor.WelcomeType:
 			c.Query(m.Root)
