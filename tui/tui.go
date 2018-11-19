@@ -68,6 +68,8 @@ func (t *TUI) mainLoop() chan struct{} {
 
 		if err := t.MainLoop(); err != nil && err != gocui.ErrQuit {
 			log.Println("Error during UI redraw", err)
+		} else if err != nil {
+			log.Println(err)
 		}
 	}()
 	return done
@@ -138,7 +140,9 @@ func (t *TUI) scrollBottom(c *gocui.Gui, v *gocui.View) error {
 	maxY := t.histState.Height()
 	t.histState.CursorEnd()
 	t.reRender()
-	if currentY < (maxY - 1) {
+	// ensure that we are both not already at the end *and* that the
+	// end is off-screen
+	if currentY < (maxY-1) && maxY > viewHeight {
 		return v.SetOrigin(currentX, maxY-viewHeight)
 	}
 	return nil
