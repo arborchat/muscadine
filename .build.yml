@@ -1,0 +1,16 @@
+image: archlinux
+packages:
+    - go
+sources:
+    - 'https://github.com/arborchat/muscadine/'
+environment:
+    GOPATH: "$HOME/go"
+    PATH: "$PATH:$GOPATH/bin"
+tasks:
+    - dependencies: |
+        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+        cd muscadine
+        dep ensure
+    - test: |
+        cd muscadine
+        go test -v -cover ./...
