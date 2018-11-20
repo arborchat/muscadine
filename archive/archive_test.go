@@ -3,6 +3,7 @@ package archive_test
 import (
 	"bytes"
 	"io"
+	"sort"
 	"testing"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -228,5 +229,60 @@ func TestLoadPersistMultiple(t *testing.T) {
 	}
 	if a.Get(messageBad.UUID).Content == messageBad.Content {
 		t.Error("Message with ID conflict should not have replaced original message")
+	}
+}
+
+// TestNeeded checks that the Needed() method returns a sorted slice with a length less
+// than the requested length.
+func TestNeeded(t *testing.T) {
+	a := newOrSkip(t)
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	message2 := message
+	message2.UUID += "2"
+	message2.Parent += "2"
+	message2.Timestamp += 6
+	message3 := message
+	message3.UUID += "3"
+	message3.Parent += "3"
+	message3.Timestamp -= 30
+	correctOrder := []*arbor.ChatMessage{}
+	const (
+		histLen      = 5
+		shortLen     = 2
+		maliciousLen = -1
+	)
+	if needed := a.Needed(histLen); len(needed) != 0 {
+		t.Errorf("Empty archive returned non-empty slice when length was %d", histLen)
+	}
+	if needed := a.Needed(maliciousLen); len(needed) != 0 {
+		t.Errorf("Empty archive returned non-empty slice when length was %d", maliciousLen)
+	}
+	for index, m := range []*arbor.ChatMessage{&message, &message2, &message3} {
+		correctOrder = append(correctOrder, m)
+		sort.Slice(correctOrder, func(i, j int) bool {
+			return correctOrder[i].Timestamp < correctOrder[j].Timestamp
+		})
+		addOrSkip(t, a, m)
+		if needed := a.Needed(histLen); len(needed) != index+1 {
+			t.Errorf("archive with %d element(s) with unknown parents returned slice with length %d", index+1, len(needed))
+		} else {
+			for i, k := range needed {
+				if k != correctOrder[i].Parent {
+					t.Errorf("Expected needed[%d]=\"%s\", found \"%s\"", i, correctOrder[i].Parent, k)
+				}
+			}
+		}
+	}
+	if needed := a.Needed(shortLen); len(needed) != shortLen {
+		t.Errorf("Requested Needed of len %d, got %d", shortLen, len(needed))
+	}
+	if needed := a.Needed(maliciousLen); len(needed) != 0 {
+		t.Errorf("non-Empty archive returned non-empty slice when length was %d", maliciousLen)
 	}
 }

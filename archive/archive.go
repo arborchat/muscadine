@@ -35,6 +35,26 @@ func (a *Archive) Last(n int) []*arbor.ChatMessage {
 	return a.chronological[len(a.chronological)-n:]
 }
 
+// Needed returns at most `n` message IDs that are referenced as parents within
+// the archive but are not present within the archive. These IDs should be sorted
+// such that the most-recently-referenced parents are returned first. If an empty
+// slice is returned, all messages within the archive have a complete ancestry.
+func (a *Archive) Needed(n int) []string {
+	if n <= 0 {
+		return make([]string, 0)
+	}
+	needed := make([]string, 0)
+	for _, m := range a.chronological {
+		if !a.Has(m.Parent) {
+			needed = append(needed, m.Parent)
+		}
+	}
+	if n >= len(needed) {
+		return needed
+	}
+	return needed[len(a.chronological)-n:]
+}
+
 // Has returns whether the archive contains a message with the given ID.
 func (a *Archive) Has(id string) bool {
 	for _, message := range a.chronological {
