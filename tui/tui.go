@@ -189,7 +189,7 @@ func (t *TUI) reRender() {
 		}
 		v.Clear()
 		if msg := t.histState.Get(t.histState.Current()); msg != nil {
-			timestamp := time.Unix(msg.Timestamp, 0).UTC().Format(time.UnixDate)
+			timestamp := time.Unix(msg.Timestamp, 0).Local().Format(time.UnixDate)
 			v.Title = histViewTitlePrefix + " | Selected: " + timestamp
 		}
 		return t.histState.Render(v)
