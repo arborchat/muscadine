@@ -3,6 +3,7 @@ package tui
 import (
 	"log"
 	"sync"
+	"time"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/jroimartin/gocui"
@@ -12,6 +13,7 @@ const historyView = "history"
 const editView = "edit"
 const preEditViewTitle = "Arrows to select, hit enter to reply"
 const midEditViewTitle = "Type your reply, hit enter to send"
+const histViewTitlePrefix = "Chat History"
 
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
@@ -186,6 +188,10 @@ func (t *TUI) reRender() {
 			return err
 		}
 		v.Clear()
+		if msg := t.histState.Get(t.histState.Current()); msg != nil {
+			timestamp := time.Unix(msg.Timestamp, 0).UTC().Format(time.UnixDate)
+			v.Title = histViewTitlePrefix + " | Selected: " + timestamp
+		}
 		return t.histState.Render(v)
 	})
 }
