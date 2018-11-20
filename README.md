@@ -50,6 +50,7 @@ The keybindings are:
     - enter/i - start a reply to the selected message
     - home/g - jump to top of history
     - end/G - jump to bottom of history
+    - q - query the server for any missing chat history (only necessary if top status bar indicates)
 - Compose Mode:
     - enter - send your message
     - escape - return to history mode
