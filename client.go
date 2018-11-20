@@ -10,6 +10,7 @@ import (
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
+	"github.com/gen2brain/beeep"
 )
 
 // UI is all of the operations that an Arbor client front-end needs to support
@@ -34,6 +35,8 @@ func (c *Client) listen() {
 		case arbor.NewMessageType:
 			if c.recieveHandler != nil {
 				c.recieveHandler(m.ChatMessage)
+				// ask notificationEngine to display the message
+				notificationEngine(c, m.ChatMessage)
 			}
 		case arbor.WelcomeType:
 			if !c.Has(m.Root) {
@@ -64,6 +67,19 @@ func Connect(connection io.ReadWriteCloser, history *archive.Archive) (*Client, 
 func (c *Client) RecieveHandler(handler func(*arbor.ChatMessage)) {
 	c.recieveHandler = handler
 	go c.listen()
+}
+
+// This method makes notifications and handles all notification logic
+func notificationEngine(cli *Client, msg *arbor.ChatMessage) {
+	// is the message new?
+	// NOTE: this comparison is in the process of being added
+	if true {
+		// do not reply to self
+		if cli.username != msg.Username {
+			toSend := msg.Username + ": " + msg.Content
+			beeep.Notify("Muscadine", toSend, "")
+		}
+	}
 }
 
 // Composer writes arbor protocol messages
