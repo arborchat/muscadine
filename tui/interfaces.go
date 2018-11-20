@@ -6,6 +6,12 @@ import (
 	arbor "github.com/arborchat/arbor-go"
 )
 
+// Client manages the connection between a TUI and a specific server
+type Client interface {
+	Composer
+	Archive
+}
+
 // Composer writes and sends protocol messages
 type Composer interface {
 	Reply(string, string) error

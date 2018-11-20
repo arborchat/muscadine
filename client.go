@@ -21,6 +21,7 @@ type UI interface {
 
 // Client can be used to communicate with an Arbor server.
 type Client struct {
+	*archive.Archive
 	recvChan       <-chan *arbor.ProtocolMessage
 	recieveHandler func(*arbor.ChatMessage)
 	Composer
@@ -35,9 +36,13 @@ func (c *Client) listen() {
 				c.recieveHandler(m.ChatMessage)
 			}
 		case arbor.WelcomeType:
-			c.Query(m.Root)
+			if !c.Has(m.Root) {
+				c.Query(m.Root)
+			}
 			for _, recent := range m.Recent {
-				c.Query(recent)
+				if !c.Has(recent) {
+					c.Query(recent)
+				}
 			}
 		}
 	}
@@ -45,8 +50,9 @@ func (c *Client) listen() {
 
 // Connect wraps the given io.ReadWriter in a Client with methods for
 // interacting with a server on the other end.
-func Connect(connection io.ReadWriteCloser) (*Client, error) {
+func Connect(connection io.ReadWriteCloser, history *archive.Archive) (*Client, error) {
 	c := &Client{}
+	c.Archive = history
 	c.recvChan = arbor.MakeMessageReader(connection)
 	c.Composer = Composer{sendChan: arbor.MakeMessageWriter(connection)}
 	return c, nil
@@ -136,12 +142,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	client, err := Connect(conn)
+	client, err := Connect(conn, history)
 	if err != nil {
 		log.Fatal(err)
 	}
 	client.username = username
-	ui, err = tui.NewTUI(client, history)
+	ui, err = tui.NewTUI(client)
 	if err != nil {
 		log.Fatal(err)
 	}

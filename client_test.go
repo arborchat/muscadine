@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/arborchat/muscadine/archive"
 	"github.com/jordwest/mock-conn"
 )
 
@@ -14,8 +15,9 @@ const testMsg = "{\"Type\":2,\"UUID\":\"92d24e9d-12cc-4742-6aaf-ea781a6b09ec\",\
 // reads data from the provided io.ReadWriter.
 func TestClient(t *testing.T) {
 	conn := mock_conn.NewConn()
+	arch := archive.New()
 	defer conn.Close()
-	c, err := Connect(conn.Client)
+	c, err := Connect(conn.Client, arch)
 	if err != nil {
 		t.Error("Connect errored with a valid io.ReadWriter", err)
 	}

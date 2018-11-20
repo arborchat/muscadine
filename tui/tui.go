@@ -27,13 +27,13 @@ type TUI struct {
 
 // NewTUI creates a new terminal user interface. The provided channel will be
 // used to relay any protocol messages initiated by the TUI.
-func NewTUI(composer Composer, archive Archive) (*TUI, error) {
+func NewTUI(client Client) (*TUI, error) {
 	gui, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		return nil, err
 	}
 	gui.InputEsc = true
-	hs, err := NewHistoryState(archive)
+	hs, err := NewHistoryState(client)
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func NewTUI(composer Composer, archive Archive) (*TUI, error) {
 		Gui:       gui,
 		messages:  make(chan *arbor.ChatMessage),
 		histState: hs,
-		Composer:  composer,
+		Composer:  client,
 	}
 	t.done = t.mainLoop()
 
