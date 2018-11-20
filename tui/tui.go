@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -188,9 +189,16 @@ func (t *TUI) reRender() {
 			return err
 		}
 		v.Clear()
+		needed := t.histState.Needed(100)
+		var suffix string
+		if len(needed) == 0 {
+			suffix = "History complete"
+		} else {
+			suffix = fmt.Sprintf("Need %d+ ancestors, q to query", len(needed))
+		}
 		if msg := t.histState.Get(t.histState.Current()); msg != nil {
 			timestamp := time.Unix(msg.Timestamp, 0).Local().Format(time.UnixDate)
-			v.Title = histViewTitlePrefix + " | Selected: " + timestamp
+			v.Title = histViewTitlePrefix + " | Selected: " + timestamp + " | " + suffix
 		}
 		return t.histState.Render(v)
 	})

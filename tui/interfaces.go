@@ -21,6 +21,7 @@ type Composer interface {
 // Archive stores and retrieves messages
 type Archive interface {
 	Last(n int) []*arbor.ChatMessage
+	Needed(n int) []string
 	Has(id string) bool
 	Get(id string) *arbor.ChatMessage
 	Add(message *arbor.ChatMessage) error
