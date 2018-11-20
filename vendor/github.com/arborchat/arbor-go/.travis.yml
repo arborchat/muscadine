@@ -1,0 +1,12 @@
+language: go
+install:
+    # install gometalinter
+    - curl -L https://git.io/vp6lP | sh && mv ./bin/* $GOPATH/bin/
+    # install dep
+    - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+    # install dependencies
+    - dep ensure
+script:
+    - go build
+    - go test -v -cover
+    - gometalinter
