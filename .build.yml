@@ -10,8 +10,9 @@ tasks:
     - dependencies: |
         mkdir -p "$GOPATH/bin"
         curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-        cd muscadine
+        mkdir -p "$GOPATH/src/github.com/arborchat" && mv muscadine "$GOPATH/src/github.com/arborchat"
+        cd "$GOPATH/src/github.com/arborchat/muscadine"
         dep ensure
     - test: |
-        cd muscadine
+        cd "$GOPATH/src/github.com/arborchat/muscadine"
         go test -v -cover ./...
