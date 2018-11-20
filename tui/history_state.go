@@ -18,11 +18,12 @@ type HistoryState struct {
 	// recent.
 	History []*arbor.ChatMessage
 	Archive
-	renderWidth, renderHeight int
-	historyHeight             int
-	current                   string
-	currentIndex              int
-	changeFuncs               chan func()
+	renderWidth, renderHeight      int
+	historyHeight                  int
+	current                        string
+	currentIndex                   int
+	cursorLineStart, cursorLineEnd int
+	changeFuncs                    chan func()
 }
 
 const (
@@ -49,6 +50,11 @@ func NewHistoryState(a Archive) (*HistoryState, error) {
 		History:     make([]*arbor.ChatMessage, defaultHistoryLength, defaultHistoryCapacity),
 		Archive:     a,
 		changeFuncs: make(chan func()),
+	}
+	h.History = h.Archive.Last(defaultHistoryCapacity)
+	if len(h.History) > 0 {
+		h.currentIndex = 0
+		h.current = h.History[0].UUID
 	}
 	// launch a goroutine to serially execute all state modifications
 	go func(h *HistoryState) {
@@ -138,7 +144,9 @@ func (h *HistoryState) Render(target io.Writer) error {
 	renderableHist := h.History
 	renderedHistLines := make([][]byte, 0, h.renderHeight) // ensure starting len is zero
 	ancestors := h.currentAncestors()
-	var colorPre, colorPost string
+	var (
+		colorPre, colorPost string
+	)
 	// render each message onto however many lines it needs and capture them all.
 	for _, message := range renderableHist {
 		if message.UUID == h.current {
@@ -157,7 +165,13 @@ func (h *HistoryState) Render(target io.Writer) error {
 			}
 		}
 		lines := RenderMessage(message, h.renderWidth, colorPre, colorPost)
+		if message.UUID == h.current {
+			h.cursorLineStart = len(renderedHistLines)
+		}
 		renderedHistLines = append(renderedHistLines, lines...)
+		if message.UUID == h.current {
+			h.cursorLineEnd = len(renderedHistLines) - 1
+		}
 	}
 	// find the lines that will actually be visible in the rendered area
 	//	renderedHistLines = lastNElemsBytes(renderedHistLines, h.renderHeight)
@@ -175,6 +189,22 @@ func (h *HistoryState) Render(target io.Writer) error {
 // Height returns the number of lines of text rendered in the last render.
 func (h *HistoryState) Height() int {
 	return h.historyHeight
+}
+
+// CursorLines returns the range of rendered lines that contain the selected message.
+// These are expressed in 0-based indicies. If the results were (1,2), that would
+// mean that the current message spans the second and third lines of the rendered
+// output.
+func (h *HistoryState) CursorLines() (int, int) {
+	done := make(chan error)
+	var start, end int
+	h.changeFuncs <- func() {
+		defer close(done)
+		start = h.cursorLineStart
+		end = h.cursorLineEnd
+	}
+	<-done
+	return start, end
 }
 
 // New alerts the HistoryState of a newly received message.

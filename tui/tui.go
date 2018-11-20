@@ -112,6 +112,13 @@ func quit(c *gocui.Gui, v *gocui.View) error {
 func (t *TUI) cursorDown(c *gocui.Gui, v *gocui.View) error {
 	t.histState.CursorDown()
 	t.reRender()
+	_, cursorEnd := t.histState.CursorLines()
+	_, currentY := v.Origin()
+	_, viewHeight := v.Size()
+	for currentY+viewHeight-1 <= cursorEnd {
+		t.scrollDown(c, v)
+		_, currentY = v.Origin()
+	}
 	return nil
 }
 
@@ -120,6 +127,12 @@ func (t *TUI) cursorDown(c *gocui.Gui, v *gocui.View) error {
 func (t *TUI) cursorUp(c *gocui.Gui, v *gocui.View) error {
 	t.histState.CursorUp()
 	t.reRender()
+	cursorStart, _ := t.histState.CursorLines()
+	_, currentY := v.Origin()
+	for currentY > 0 && currentY+1 > cursorStart {
+		t.scrollUp(c, v)
+		_, currentY = v.Origin()
+	}
 	return nil
 }
 
