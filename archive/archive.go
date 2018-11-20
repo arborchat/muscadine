@@ -45,7 +45,7 @@ func (a *Archive) Needed(n int) []string {
 	}
 	needed := make([]string, 0)
 	for _, m := range a.chronological {
-		if !a.Has(m.Parent) {
+		if m.Parent != "" && !a.Has(m.Parent) {
 			needed = append(needed, m.Parent)
 		}
 	}

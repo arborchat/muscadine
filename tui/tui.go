@@ -181,6 +181,16 @@ func (t *TUI) scrollTop(c *gocui.Gui, v *gocui.View) error {
 	return v.SetOrigin(currentX, 0)
 }
 
+// queryNeeded sends a batch of queries to the server to update the history.
+func (t *TUI) queryNeeded(c *gocui.Gui, v *gocui.View) error {
+	needed := t.histState.Needed(10)
+	log.Println(needed)
+	for _, n := range needed {
+		t.Query(n)
+	}
+	return nil
+}
+
 // reRender forces a redraw of the historyView
 func (t *TUI) reRender() {
 	t.Update(func(g *gocui.Gui) error {
@@ -192,9 +202,9 @@ func (t *TUI) reRender() {
 		needed := t.histState.Needed(100)
 		var suffix string
 		if len(needed) == 0 {
-			suffix = "History complete"
+			suffix = "all known threads complete"
 		} else {
-			suffix = fmt.Sprintf("Need %d+ ancestors, q to query", len(needed))
+			suffix = fmt.Sprintf("%d+ broken threads, q to query", len(needed))
 		}
 		if msg := t.histState.Get(t.histState.Current()); msg != nil {
 			timestamp := time.Unix(msg.Timestamp, 0).Local().Format(time.UnixDate)
@@ -280,6 +290,7 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		{historyView, 'g', gocui.ModNone, t.scrollTop, "scrollTop"},
 		{historyView, gocui.KeyEnd, gocui.ModNone, t.scrollBottom, "scrollBottom"},
 		{historyView, 'G', gocui.ModNone, t.scrollBottom, "scrollBottom"},
+		{historyView, 'q', gocui.ModNone, t.queryNeeded, "queryNeeded"},
 		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
 		{editView, gocui.KeyEsc, gocui.ModNone, t.cancelReply, "cancelReply"},
 	}

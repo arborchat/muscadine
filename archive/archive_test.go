@@ -285,4 +285,12 @@ func TestNeeded(t *testing.T) {
 	if needed := a.Needed(maliciousLen); len(needed) != 0 {
 		t.Errorf("non-Empty archive returned non-empty slice when length was %d", maliciousLen)
 	}
+	root := message
+	root.Parent = ""
+	addOrSkip(t, a, &root)
+	for _, parent := range a.Needed(10) {
+		if parent == "" {
+			t.Errorf("Should not express the empty string as a needed parent")
+		}
+	}
 }
