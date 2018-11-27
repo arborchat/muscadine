@@ -74,6 +74,7 @@ func (c *Client) RecieveHandler(handler func(*arbor.ChatMessage)) {
 func notificationEngine(cli *Client, msg *arbor.ChatMessage) {
 	// is the message new?
 	if msg.Timestamp > (time.Now().Unix() - int64(5)) {
+
 		// do not reply to self
 		if cli.username != msg.Username {
 			toSend := msg.Username + ": " + msg.Content
