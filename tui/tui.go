@@ -184,7 +184,6 @@ func (t *TUI) scrollTop(c *gocui.Gui, v *gocui.View) error {
 // queryNeeded sends a batch of queries to the server to update the history.
 func (t *TUI) queryNeeded(c *gocui.Gui, v *gocui.View) error {
 	needed := t.histState.Needed(10)
-	log.Println(needed)
 	for _, n := range needed {
 		t.Query(n)
 	}
