@@ -2,56 +2,151 @@ package main
 
 import (
 	"io"
+	"net"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
+	"github.com/arborchat/muscadine/tui"
 )
 
-// Client can be used to communicate with an Arbor server.
-type Client struct {
-	*archive.Archive
-	recvChan       <-chan *arbor.ProtocolMessage
-	recieveHandler func(*arbor.ChatMessage)
-	Composer
+// Connector is the type of functions that connect to a server over
+// a given transport.
+type Connector func(address string) (io.ReadWriteCloser, error)
+
+// TCPDial makes an unencrypted TCP connection to the given address
+func TCPDial(address string) (io.ReadWriteCloser, error) {
+	return net.Dial("tcp", address)
 }
 
-// listen monitors for messages from the server and handles them.
-func (c *Client) listen() {
-	for m := range c.recvChan {
-		switch m.Type {
-		case arbor.NewMessageType:
-			if c.recieveHandler != nil {
-				c.recieveHandler(m.ChatMessage)
-				// ask notificationEngine to display the message
-				notificationEngine(c, m.ChatMessage)
+// NetClient manages the connection to a server. It provides methods to configure
+// event handlers and to connect and disconnect from the server. It also embeds
+// the functionality of an Archive and Composer.
+type NetClient struct {
+	*archive.Archive
+	Composer
+	address string
+	arbor.ReadWriteCloser
+	connectFunc       Connector
+	disconnectHandler func(tui.Connection)
+	receiveHandler    func(*arbor.ChatMessage)
+	stopSending       chan struct{}
+	stopReceiving     chan struct{}
+}
+
+// NewNetClient creates a NetClient configured to communicate with the server at the
+// given address and to use the provided archive to store the history.
+func NewNetClient(address, username string, history *archive.Archive) (*NetClient, error) {
+	composerOut := make(chan *arbor.ProtocolMessage)
+	stopSending := make(chan struct{})
+	stopReceiving := make(chan struct{})
+	nc := &NetClient{
+		address:       address,
+		Archive:       history,
+		connectFunc:   TCPDial,
+		Composer:      Composer{username: username, sendChan: composerOut},
+		stopSending:   stopSending,
+		stopReceiving: stopReceiving,
+	}
+	return nc, nil
+}
+
+// SetConnector changes the function used to connect to a server address. This is
+// useful both for testing purposes and to change the transport mechanism of the
+// io.ReadWriteCloser. To avoid race conditions, change this before calling
+// Connect() for the first time.
+func (nc *NetClient) SetConnector(connector Connector) {
+	nc.connectFunc = connector
+}
+
+// OnDisconnect sets the handler for disconnections. This should be done before
+// calling Connect() for the first time to avoid race conditions.
+func (nc *NetClient) OnDisconnect(handler func(tui.Connection)) {
+	nc.disconnectHandler = handler
+}
+
+// OnReceive sets the handler for when ChatMessages are received. This should be done before
+// calling Connect() for the first time to avoid race conditions.
+func (nc *NetClient) OnReceive(handler func(*arbor.ChatMessage)) {
+	nc.receiveHandler = handler
+}
+
+// Connect resolves the address of the NetClient and attempts to establish a connection.
+func (nc *NetClient) Connect() error {
+	conn, err := nc.connectFunc(nc.address)
+	if err != nil {
+		return err
+	}
+	nc.ReadWriteCloser, err = arbor.NewProtocolReadWriter(conn)
+	if err != nil {
+		return err
+	}
+	go nc.send()
+	go nc.receive()
+	return nil
+}
+
+// Disconnect stops all communication with the server and closes the connection. It invokes
+// the handler set by OnDisconnect, if there is one.
+func (nc *NetClient) Disconnect() error {
+	nc.stopSending <- struct{}{}
+	nc.stopReceiving <- struct{}{}
+	err := nc.ReadWriteCloser.Close()
+	if nc.disconnectHandler != nil {
+		nc.disconnectHandler(nc)
+	}
+	return err
+}
+
+func (nc *NetClient) send() {
+	errored := false
+	for {
+		select {
+		case p := <-nc.Composer.sendChan:
+			err := nc.ReadWriteCloser.Write(p)
+			if !errored && err != nil {
+				errored = true
+				go nc.Disconnect()
+			} else if errored {
+				continue
 			}
-		case arbor.WelcomeType:
-			if !c.Has(m.Root) {
-				c.Query(m.Root)
-			}
-			for _, recent := range m.Recent {
-				if !c.Has(recent) {
-					c.Query(recent)
-				}
-			}
+		case <-nc.stopSending:
+			return
 		}
 	}
 }
 
-// Connect wraps the given io.ReadWriter in a Client with methods for
-// interacting with a server on the other end.
-func Connect(connection io.ReadWriteCloser, history *archive.Archive) (*Client, error) {
-	c := &Client{}
-	c.Archive = history
-	c.recvChan = arbor.MakeMessageReader(connection)
-	c.Composer = Composer{sendChan: arbor.MakeMessageWriter(connection)}
-	return c, nil
-}
-
-// RecieveHandler sets a function to be invoked whenever the Client
-// receives a chat message from the server. This handler function must
-// be safe to be invoked concurrently.
-func (c *Client) RecieveHandler(handler func(*arbor.ChatMessage)) {
-	c.recieveHandler = handler
-	go c.listen()
+func (nc *NetClient) receive() {
+	errored := false
+	for {
+		select {
+		case <-nc.stopReceiving:
+			return
+		default:
+			m := new(arbor.ProtocolMessage)
+			err := nc.ReadWriteCloser.Read(m)
+			if !errored && err != nil {
+				errored = true
+				go nc.Disconnect()
+			} else if errored {
+				continue
+			}
+			switch m.Type {
+			case arbor.NewMessageType:
+				if nc.receiveHandler != nil {
+					nc.receiveHandler(m.ChatMessage)
+					// ask notificationEngine to display the message
+					notificationEngine(nc, m.ChatMessage)
+				}
+			case arbor.WelcomeType:
+				if !nc.Has(m.Root) {
+					nc.Query(m.Root)
+				}
+				for _, recent := range m.Recent {
+					if !nc.Has(recent) {
+						nc.Query(recent)
+					}
+				}
+			}
+		}
+	}
 }

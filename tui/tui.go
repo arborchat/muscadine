@@ -25,6 +25,7 @@ type TUI struct {
 	histState      *HistoryState
 	init           sync.Once
 	editMode       bool
+	connected      bool
 	lastKnownWidth int
 }
 
@@ -47,10 +48,35 @@ func NewTUI(client Client) (*TUI, error) {
 		histState: hs,
 		Composer:  client,
 	}
+	client.OnReceive(t.Display)
 	t.done = t.mainLoop()
+	go t.manageConnection(client)
 
 	go t.update()
 	return t, err
+}
+
+func (t *TUI) manageConnection(c Connection) {
+	disconnected := make(chan struct{})
+	c.OnDisconnect(func(disconn Connection) {
+		disconnected <- struct{}{}
+	})
+	for {
+		for {
+			err := c.Connect()
+			if err != nil {
+				log.Println(err)
+				time.Sleep(time.Second * 5)
+				continue
+			}
+			break
+		}
+		t.connected = true
+		t.reRender()
+		<-disconnected
+		t.reRender()
+		t.connected = false
+	}
 }
 
 // mainLoop sets up the TUI and runs its event loop in a goroutine
@@ -200,10 +226,15 @@ func (t *TUI) reRender() {
 		v.Clear()
 		needed := t.histState.Needed(100)
 		var suffix string
-		if len(needed) == 0 {
-			suffix = "all known threads complete"
+		if !t.connected {
+			suffix += "Reconnecting... "
 		} else {
-			suffix = fmt.Sprintf("%d+ broken threads, q to query", len(needed))
+			suffix += "Connected, "
+		}
+		if len(needed) == 0 {
+			suffix += "all known threads complete"
+		} else {
+			suffix += fmt.Sprintf("%d+ broken threads, q to query", len(needed))
 		}
 		if msg := t.histState.Get(t.histState.Current()); msg != nil {
 			timestamp := time.Unix(msg.Timestamp, 0).Local().Format(time.UnixDate)

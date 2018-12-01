@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"log"
-	"net"
 	"os"
 
 	arbor "github.com/arborchat/arbor-go"
@@ -33,20 +32,14 @@ func main() {
 	}
 	history := archive.New()
 	loadHist(history, histfile)
-	conn, err := net.Dial("tcp", flag.Arg(0))
+	client, err := NewNetClient(flag.Arg(0), username, history)
 	if err != nil {
 		log.Fatal(err)
 	}
-	client, err := Connect(conn, history)
-	if err != nil {
-		log.Fatal(err)
-	}
-	client.username = username
 	ui, err = tui.NewTUI(client)
 	if err != nil {
 		log.Fatal(err)
 	}
-	client.RecieveHandler(ui.Display)
 	ui.AwaitExit()
 	saveHist(history, histfile)
 }

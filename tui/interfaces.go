@@ -10,12 +10,21 @@ import (
 type Client interface {
 	Composer
 	Archive
+	Connection
 }
 
 // Composer writes and sends protocol messages
 type Composer interface {
 	Reply(string, string) error
 	Query(string)
+}
+
+// Connection models a live connection to a server
+type Connection interface {
+	OnDisconnect(handler func(Connection))
+	OnReceive(handler func(*arbor.ChatMessage))
+	Connect() error
+	Disconnect() error
 }
 
 // Archive stores and retrieves messages

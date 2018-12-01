@@ -7,7 +7,7 @@ import (
 // Composer writes arbor protocol messages
 type Composer struct {
 	username string
-	sendChan chan<- *arbor.ProtocolMessage
+	sendChan chan *arbor.ProtocolMessage
 }
 
 // Reply sends a reply to `parent` with the given message content.

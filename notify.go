@@ -8,7 +8,7 @@ import (
 )
 
 // This method makes notifications and handles all notification logic
-func notificationEngine(cli *Client, msg *arbor.ChatMessage) {
+func notificationEngine(cli *NetClient, msg *arbor.ChatMessage) {
 	// is the message new?
 	if msg.Timestamp > (time.Now().Unix() - int64(5)) {
 		// do not reply to self
