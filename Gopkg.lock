@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:552f1612386320cc288fb592d30329329b34e6bd609212925b9ef1c29c50c9ed"
+  digest = "1:0a1ae1133be5dc2185095b7207cdc2a02afd1f09ada655c00511ac7bc3db4e93"
   name = "github.com/arborchat/arbor-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ba182c47327bdb991d41e1b807619e4809a2e154"
-  version = "v0.1.3"
+  revision = "d5ce559d0c07a31b90347673837eb4b43c97cff5"
+  version = "v0.1.4"
 
 [[projects]]
   digest = "1:18651a61ae4ba9ee396e0a2fb1882b5f69e6a5b52ee3432f4d7718496f7e857d"
