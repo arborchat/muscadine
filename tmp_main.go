@@ -5,12 +5,10 @@ import (
 	"log"
 	"net"
 	"os"
-	"time"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
-	"github.com/gen2brain/beeep"
 )
 
 // UI is all of the operations that an Arbor client front-end needs to support
@@ -18,18 +16,6 @@ import (
 type UI interface {
 	Display(*arbor.ChatMessage) // adds a chat message to the UI
 	AwaitExit()                 // blocks until UI exit
-}
-
-// This method makes notifications and handles all notification logic
-func notificationEngine(cli *Client, msg *arbor.ChatMessage) {
-	// is the message new?
-	if msg.Timestamp > (time.Now().Unix() - int64(5)) {
-		// do not reply to self
-		if cli.username != msg.Username {
-			toSend := msg.Username + ": " + msg.Content
-			beeep.Notify("Muscadine", toSend, "")
-		}
-	}
 }
 
 func main() {
