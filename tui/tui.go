@@ -282,6 +282,13 @@ func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
 	return t.composeMode()
 }
 
+// composeReplyToRoot starts replying to the earliest known message (root, unless something is very wrong).
+func (t *TUI) composeReplyToRoot(c *gocui.Gui, v *gocui.View) error {
+	t.histState.CursorBeginning()
+	t.reRender()
+	return t.composeMode()
+}
+
 // cancelReply exits compose mode and returns to history mode.
 func (t *TUI) cancelReply(c *gocui.Gui, v *gocui.View) error {
 	return t.historyMode()
@@ -320,6 +327,7 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
 		{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
 		{historyView, 'i', gocui.ModNone, t.composeReply, "composeReply"},
+		{historyView, 'r', gocui.ModNone, t.composeReplyToRoot, "composeReplyToRoot"},
 		{historyView, gocui.KeyHome, gocui.ModNone, t.scrollTop, "scrollTop"},
 		{historyView, 'g', gocui.ModNone, t.scrollTop, "scrollTop"},
 		{historyView, gocui.KeyEnd, gocui.ModNone, t.scrollBottom, "scrollBottom"},
