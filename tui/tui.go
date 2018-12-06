@@ -65,7 +65,6 @@ func (t *TUI) manageConnection(c Connection) {
 		for {
 			err := c.Connect()
 			if err != nil {
-				log.Println(err)
 				time.Sleep(time.Second * 5)
 				continue
 			}
@@ -74,8 +73,8 @@ func (t *TUI) manageConnection(c Connection) {
 		t.connected = true
 		t.reRender()
 		<-disconnected
-		t.reRender()
 		t.connected = false
+		t.reRender()
 	}
 }
 
@@ -227,7 +226,7 @@ func (t *TUI) reRender() {
 		needed := t.histState.Needed(100)
 		var suffix string
 		if !t.connected {
-			suffix += "Reconnecting... "
+			suffix += "Connecting... "
 		} else {
 			suffix += "Connected, "
 		}
