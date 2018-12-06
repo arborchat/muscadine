@@ -95,7 +95,7 @@ func (t *TUI) mainLoop() chan struct{} {
 
 		t.SetManagerFunc(t.layout)
 
-		if err := t.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, quit); err != nil {
+		if err := t.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, t.quit); err != nil {
 			log.Println("Failed registering exit keystroke handler", err)
 		}
 
@@ -136,7 +136,10 @@ func (t *TUI) Display(message *arbor.ChatMessage) {
 
 // quit asks the TUI to stop running. Should only be called as
 // a keystroke or mouse input handler.
-func quit(c *gocui.Gui, v *gocui.View) error {
+func (t *TUI) quit(c *gocui.Gui, v *gocui.View) error {
+	t.histState.CursorBeginning()
+	t.Composer.Reply(t.histState.Current(), "[quit]")
+	time.Sleep(time.Millisecond * 250) // wait in the hope that Quit will be sent
 	return gocui.ErrQuit
 }
 
