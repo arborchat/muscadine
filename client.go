@@ -88,12 +88,15 @@ func (nc *NetClient) Connect() error {
 // Disconnect stops all communication with the server and closes the connection. It invokes
 // the handler set by OnDisconnect, if there is one.
 func (nc *NetClient) Disconnect() error {
-	nc.stopSending <- struct{}{}
-	nc.stopReceiving <- struct{}{}
 	err := nc.ReadWriteCloser.Close()
 	if nc.disconnectHandler != nil {
-		nc.disconnectHandler(nc)
+		go nc.disconnectHandler(nc)
 	}
+	go func() {
+		nc.stopSending <- struct{}{}
+		nc.stopReceiving <- struct{}{}
+	}()
+
 	return err
 }
 
@@ -118,11 +121,11 @@ func (nc *NetClient) send() {
 func (nc *NetClient) receive() {
 	errored := false
 	for {
+		m := new(arbor.ProtocolMessage)
 		select {
 		case <-nc.stopReceiving:
 			return
 		default:
-			m := new(arbor.ProtocolMessage)
 			err := nc.ReadWriteCloser.Read(m)
 			if !errored && err != nil {
 				errored = true
