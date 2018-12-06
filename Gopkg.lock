@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:0a1ae1133be5dc2185095b7207cdc2a02afd1f09ada655c00511ac7bc3db4e93"
+  digest = "1:75f2fb6de78273227510c14c9ec74840e9bb4a717a830abcbf5c56d6bfb755d5"
   name = "github.com/arborchat/arbor-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d5ce559d0c07a31b90347673837eb4b43c97cff5"
-  version = "v0.1.4"
+  revision = "d020ea259f6c238f03ede9b9002903d86fbfb9f1"
+  version = "v0.1.6"
 
 [[projects]]
   digest = "1:18651a61ae4ba9ee396e0a2fb1882b5f69e6a5b52ee3432f4d7718496f7e857d"
@@ -48,14 +48,6 @@
   pruneopts = "UT"
   revision = "b0e1786f520333e4546f02930c5ca8a929b38841"
   version = "v1.0.1"
-
-[[projects]]
-  branch = "master"
-  digest = "1:b8ea2f94c66b4cb5aa3302827b9a147adfb4a98d21b75d30cc569fdbbdcd7c75"
-  name = "github.com/jordwest/mock-conn"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "4896c6bd164172da9f78789f233b470a3a6fb359"
 
 [[projects]]
   digest = "1:114ecad51af93a73ae6781fd0d0bc28e52b433c852b84ab4b4c109c15e6c6b6d"
@@ -117,12 +109,45 @@
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
+  digest = "1:7a137fb7718928e473b7d805434ae563ec41790d3d227cdc64e8b14d1cab8a1f"
+  name = "github.com/onsi/gomega"
+  packages = [
+    ".",
+    "format",
+    "internal/assertion",
+    "internal/asyncassertion",
+    "internal/oraclematcher",
+    "internal/testingtsupport",
+    "matchers",
+    "matchers/support/goraph/bipartitegraph",
+    "matchers/support/goraph/edge",
+    "matchers/support/goraph/node",
+    "matchers/support/goraph/util",
+    "types",
+  ]
+  pruneopts = "UT"
+  revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
+  version = "v1.4.3"
+
+[[projects]]
   digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
   pruneopts = "UT"
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
   version = "v0.8.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:5193d913046443e59093d66a97a40c51f4a5ea4ceba60f3b3ecf89694de5d16f"
+  name = "golang.org/x/net"
+  packages = [
+    "html",
+    "html/atom",
+    "html/charset",
+  ]
+  pruneopts = "UT"
+  revision = "351d144fa1fc0bd934e2408202be0c29f25e35a0"
 
 [[projects]]
   branch = "master"
@@ -136,12 +161,46 @@
   revision = "ec83556a53fe16b65c452a104ea9d1e86a671852"
 
 [[projects]]
+  digest = "1:aa4d6967a3237f8367b6bf91503964a77183ecf696f1273e8ad3551bb4412b5f"
+  name = "golang.org/x/text"
+  packages = [
+    "encoding",
+    "encoding/charmap",
+    "encoding/htmlindex",
+    "encoding/internal",
+    "encoding/internal/identifier",
+    "encoding/japanese",
+    "encoding/korean",
+    "encoding/simplifiedchinese",
+    "encoding/traditionalchinese",
+    "encoding/unicode",
+    "internal/gen",
+    "internal/tag",
+    "internal/utf8internal",
+    "language",
+    "runes",
+    "transform",
+    "unicode/cldr",
+  ]
+  pruneopts = "UT"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
+
+[[projects]]
   branch = "v1"
   digest = "1:b71ccd8615521db4ea2f9381f55780a1312654f5d8431d2e58eca51c74110de2"
   name = "gopkg.in/toast.v1"
   packages = ["."]
   pruneopts = "UT"
   revision = "0a84660828b24d25b35525c9a1f1f51267f8da91"
+
+[[projects]]
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
+  version = "v2.2.2"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -150,10 +209,10 @@
     "github.com/arborchat/arbor-go",
     "github.com/bbrks/wrap",
     "github.com/gen2brain/beeep",
-    "github.com/jordwest/mock-conn",
     "github.com/jroimartin/gocui",
     "github.com/mattn/go-runewidth",
     "github.com/multiformats/go-multicodec/json",
+    "github.com/onsi/gomega",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

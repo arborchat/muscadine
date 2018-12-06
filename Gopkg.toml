@@ -34,10 +34,6 @@
   version = "2.3.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/jordwest/mock-conn"
-
-[[constraint]]
   name = "github.com/jroimartin/gocui"
   version = "0.4.0"
 
