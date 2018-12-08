@@ -56,6 +56,9 @@ func NewTUI(client Client) (*TUI, error) {
 	return t, err
 }
 
+// manageConnection handles the actual policy of when to connect from and disconnect
+// from the server. The current implementation tries to connect as soon as possible,
+// then tries to reconnect every 5 seconds if it is disconnected.
 func (t *TUI) manageConnection(c Connection) {
 	disconnected := make(chan struct{})
 	c.OnDisconnect(func(disconn Connection) {
@@ -75,6 +78,8 @@ func (t *TUI) manageConnection(c Connection) {
 		<-disconnected
 		t.connected = false
 		t.reRender()
+		// if we get here, we've been disconnected and will now loop around to a
+		// connection attempt
 	}
 }
 
