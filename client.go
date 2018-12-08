@@ -9,7 +9,7 @@ import (
 	"github.com/arborchat/muscadine/tui"
 )
 
-// Connector is the type of functions that connect to a server over
+// Connector is the type of function that connects to a server over
 // a given transport.
 type Connector func(address string) (io.ReadWriteCloser, error)
 
