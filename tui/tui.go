@@ -71,6 +71,16 @@ func (t *TUI) manageConnection(c Connection) {
 				time.Sleep(time.Second * 5)
 				continue
 			}
+			go func() {
+				for i := 0; i < 5; i++ {
+					if root, err := t.histState.Root(); err == nil {
+						t.Composer.Reply(root, "[join]")
+						return
+					}
+					time.Sleep(5 * time.Second)
+				}
+				log.Println("Gave up greeting server")
+			}()
 			break
 		}
 		t.connected = true
@@ -137,9 +147,12 @@ func (t *TUI) Display(message *arbor.ChatMessage) {
 // quit asks the TUI to stop running. Should only be called as
 // a keystroke or mouse input handler.
 func (t *TUI) quit(c *gocui.Gui, v *gocui.View) error {
-	t.histState.CursorBeginning()
-	t.Composer.Reply(t.histState.Current(), "[quit]")
-	time.Sleep(time.Millisecond * 250) // wait in the hope that Quit will be sent
+	if root, err := t.histState.Root(); err != nil {
+		log.Println("Not notifying that we quit:", err)
+	} else {
+		t.Composer.Reply(root, "[quit]")
+		time.Sleep(time.Millisecond * 250) // wait in the hope that Quit will be sent
+	}
 	return gocui.ErrQuit
 }
 

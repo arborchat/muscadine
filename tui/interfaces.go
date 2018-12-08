@@ -33,6 +33,7 @@ type Archive interface {
 	Needed(n int) []string
 	Has(id string) bool
 	Get(id string) *arbor.ChatMessage
+	Root() (string, error)
 	Add(message *arbor.ChatMessage) error
 	Persist(storage io.Writer) error
 	Load(storage io.Reader) error
