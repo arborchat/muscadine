@@ -7,6 +7,7 @@ import (
 	"time"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/arborchat/muscadine/types"
 	"github.com/jroimartin/gocui"
 )
 
@@ -21,7 +22,7 @@ type TUI struct {
 	*gocui.Gui
 	done     chan struct{}
 	messages chan *arbor.ChatMessage
-	Composer
+	types.Composer
 	histState      *HistoryState
 	init           sync.Once
 	editMode       bool
@@ -31,7 +32,7 @@ type TUI struct {
 
 // NewTUI creates a new terminal user interface. The provided channel will be
 // used to relay any protocol messages initiated by the TUI.
-func NewTUI(client Client) (*TUI, error) {
+func NewTUI(client types.Client) (*TUI, error) {
 	gui, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		return nil, err
@@ -59,9 +60,9 @@ func NewTUI(client Client) (*TUI, error) {
 // manageConnection handles the actual policy of when to connect from and disconnect
 // from the server. The current implementation tries to connect as soon as possible,
 // then tries to reconnect every 5 seconds if it is disconnected.
-func (t *TUI) manageConnection(c Connection) {
+func (t *TUI) manageConnection(c types.Connection) {
 	disconnected := make(chan struct{})
-	c.OnDisconnect(func(disconn Connection) {
+	c.OnDisconnect(func(disconn types.Connection) {
 		disconnected <- struct{}{}
 	})
 	for {

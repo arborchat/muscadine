@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	arbor "github.com/arborchat/arbor-go"
+	"github.com/arborchat/muscadine/types"
 	"github.com/bbrks/wrap"
 	runewidth "github.com/mattn/go-runewidth"
 )
@@ -17,7 +18,7 @@ type HistoryState struct {
 	// Index 0 holds the oldes messages, and the highest valid index holds the most
 	// recent.
 	History []*arbor.ChatMessage
-	Archive
+	types.Archive
 	renderWidth, renderHeight      int
 	historyHeight                  int
 	current                        string
@@ -42,7 +43,7 @@ const (
 )
 
 // NewHistoryState creates an empty HistoryState ready to be updated.
-func NewHistoryState(a Archive) (*HistoryState, error) {
+func NewHistoryState(a types.Archive) (*HistoryState, error) {
 	if a == nil {
 		return nil, fmt.Errorf("Cannot create HistoryState will nil Archive")
 	}

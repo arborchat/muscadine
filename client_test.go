@@ -7,7 +7,7 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
-	"github.com/arborchat/muscadine/tui"
+	"github.com/arborchat/muscadine/types"
 	"github.com/onsi/gomega"
 )
 
@@ -45,7 +45,7 @@ func TestNetClient(t *testing.T) {
 	g.Expect(err).To(gomega.BeNil())
 
 	nc.SetConnector(bufConnector)
-	nc.OnDisconnect(func(client tui.Connection) {
+	nc.OnDisconnect(func(client types.Connection) {
 		times++
 		timesDisconnected <- times
 	})

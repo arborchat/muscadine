@@ -4,10 +4,10 @@ import (
 	"log"
 	"os"
 
-	"github.com/arborchat/muscadine/tui"
+	"github.com/arborchat/muscadine/types"
 )
 
-func loadHist(history tui.Archive, histfile string) {
+func loadHist(history types.Archive, histfile string) {
 	if histfile != "" {
 		file, err := os.Open(histfile)
 		if err != nil {
@@ -22,7 +22,7 @@ func loadHist(history tui.Archive, histfile string) {
 		}
 	}
 }
-func saveHist(history tui.Archive, histfile string) {
+func saveHist(history types.Archive, histfile string) {
 	if histfile != "" {
 		file, err := os.OpenFile(histfile, os.O_RDWR|os.O_CREATE, 0600)
 		if err != nil {

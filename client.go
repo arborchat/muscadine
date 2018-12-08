@@ -9,7 +9,7 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
-	"github.com/arborchat/muscadine/tui"
+	"github.com/arborchat/muscadine/types"
 )
 
 const timeout = 30 * time.Second
@@ -32,7 +32,7 @@ type NetClient struct {
 	address string
 	arbor.ReadWriteCloser
 	connectFunc       Connector
-	disconnectHandler func(tui.Connection)
+	disconnectHandler func(types.Connection)
 	receiveHandler    func(*arbor.ChatMessage)
 	stopSending       chan struct{}
 	stopReceiving     chan struct{}
@@ -76,7 +76,7 @@ func (nc *NetClient) SetConnector(connector Connector) {
 
 // OnDisconnect sets the handler for disconnections. This should be done before
 // calling Connect() for the first time to avoid race conditions.
-func (nc *NetClient) OnDisconnect(handler func(tui.Connection)) {
+func (nc *NetClient) OnDisconnect(handler func(types.Connection)) {
 	nc.disconnectHandler = handler
 }
 

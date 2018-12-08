@@ -5,21 +5,14 @@ import (
 	"log"
 	"os"
 
-	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
+	"github.com/arborchat/muscadine/types"
 )
-
-// UI is all of the operations that an Arbor client front-end needs to support
-// in order to be a drop-in replacement for the default.
-type UI interface {
-	Display(*arbor.ChatMessage) // adds a chat message to the UI
-	AwaitExit()                 // blocks until UI exit
-}
 
 func main() {
 	var (
-		ui       UI
+		ui       types.UI
 		err      error
 		username string
 		histfile string
