@@ -11,8 +11,6 @@ import (
 	"github.com/onsi/gomega"
 )
 
-const testMsg = "{\"Type\":2,\"UUID\":\"92d24e9d-12cc-4742-6aaf-ea781a6b09ec\",\"Parent\":\"f4ae0b74-4025-4810-41d6-5148a513c580\",\"Content\":\"A riveting example message.\",\"Username\":\"Examplius_Caesar\",\"Timestamp\":1537738224}\n"
-
 func bufConnector(address string) (io.ReadWriteCloser, error) {
 	return arbor.NoopRWCloser(new(bytes.Buffer)), nil
 }
