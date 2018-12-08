@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"net"
 
@@ -36,6 +37,13 @@ type NetClient struct {
 // NewNetClient creates a NetClient configured to communicate with the server at the
 // given address and to use the provided archive to store the history.
 func NewNetClient(address, username string, history *archive.Archive) (*NetClient, error) {
+	if address == "" {
+		return nil, fmt.Errorf("Illegal address: \"%s\"", address)
+	} else if username == "" {
+		return nil, fmt.Errorf("Illegal username: \"%s\"", username)
+	} else if history == nil {
+		return nil, fmt.Errorf("Illegal archive: %v", history)
+	}
 	composerOut := make(chan *arbor.ProtocolMessage)
 	stopSending := make(chan struct{})
 	stopReceiving := make(chan struct{})
@@ -104,8 +112,8 @@ func (nc *NetClient) send() {
 	errored := false
 	for {
 		select {
-		case p := <-nc.Composer.sendChan:
-			err := nc.ReadWriteCloser.Write(p)
+		case protoMessage := <-nc.Composer.sendChan:
+			err := nc.ReadWriteCloser.Write(protoMessage)
 			if !errored && err != nil {
 				errored = true
 				go nc.Disconnect()
