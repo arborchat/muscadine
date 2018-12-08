@@ -13,6 +13,7 @@ import (
 // It provides mechanisms to persist history to and load history from disk.
 type Archive struct {
 	chronological []*arbor.ChatMessage
+	root          string
 }
 
 const defaultCapacity = 1024
@@ -97,7 +98,21 @@ func (a *Archive) Add(message *arbor.ChatMessage) error {
 	messageCopy := *message
 	a.chronological = append(a.chronological, &messageCopy)
 	a.sort()
+	if a.root == "" && message.Parent == "" {
+		a.root = message.UUID
+	}
 	return nil
+}
+
+// Root returns the root message within the archive. If no root message is known,
+// it instead returns the oldest message within the archive.
+func (a *Archive) Root() (string, error) {
+	if a.root != "" {
+		return a.root, nil
+	} else if len(a.chronological) > 0 {
+		return a.chronological[0].UUID, nil
+	}
+	return "", fmt.Errorf("No known messages")
 }
 
 // Persist stores the contents of the archive into the provided io.Writer.

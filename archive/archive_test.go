@@ -8,6 +8,7 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
+	"github.com/onsi/gomega"
 )
 
 // TestNew ensures that the Archive constructor is working.
@@ -71,6 +72,38 @@ func TestAddHasGet(t *testing.T) {
 	if a.Get(messageConflict.UUID).Content == messageConflict.Content {
 		t.Error("Adding a conflicting message overwrote the existing message")
 	}
+}
+
+// TestRoot ensures that the Root() method returns either the UUID of the root
+// message or that of the oldest known message.
+func TestRoot(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	a := newOrSkip(t)
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	message2 := message
+	message2.UUID += "2"
+	message2.Parent = ""
+	message2.Timestamp += 6
+
+	root, err := a.Root()
+	g.Expect(root).To(gomega.Equal(""))
+	g.Expect(err).ToNot(gomega.BeNil())
+
+	g.Expect(a.Add(&message)).To(gomega.BeNil())
+	root, err = a.Root()
+	g.Expect(root).To(gomega.Equal(message.UUID))
+	g.Expect(err).To(gomega.BeNil())
+
+	g.Expect(a.Add(&message2)).To(gomega.BeNil())
+	root, err = a.Root()
+	g.Expect(root).To(gomega.Equal(message2.UUID))
+	g.Expect(err).To(gomega.BeNil())
 }
 
 // TestLast checks that the Last() method returns a sorted slice with a length less
