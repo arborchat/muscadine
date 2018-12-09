@@ -59,6 +59,15 @@ func (e *Editor) insertNewline(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+// insertTab adds a tab character into the editor at the current cursor position.
+func (e *Editor) insertTab(g *gocui.Gui, v *gocui.View) error {
+	v.EditWrite(' ')
+	v.EditWrite(' ')
+	v.EditWrite(' ')
+	v.EditWrite(' ')
+	return nil
+}
+
 // Layout is responsible for setting the desired view dimensions for the
 // Editor, but *not* for setting its position. That is handled by a higher-order
 // layout function.

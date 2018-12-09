@@ -32,6 +32,7 @@ func (t *TUI) Keybindings() []Binding {
 		{historyView, 'G', gocui.ModNone, t.scrollBottom, "scrollBottom"},
 		{historyView, 'q', gocui.ModNone, t.queryNeeded, "queryNeeded"},
 		{editView, gocui.KeyEnter, gocui.ModAlt, t.Editor.insertNewline, "insertNewline"},
+		{editView, gocui.KeyTab, gocui.ModNone, t.Editor.insertTab, "insertTab"},
 		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
 		{editView, gocui.KeyCtrlBackslash, gocui.ModNone, t.cancelReply, "cancelReply"},
 	}
