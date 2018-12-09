@@ -12,6 +12,7 @@ import (
 
 const historyView = "history"
 const editView = "edit"
+const globalView = ""
 const preEditViewTitle = "Arrows to select, hit enter to reply"
 const midEditViewTitle = "Type your reply, hit enter to send"
 const histViewTitlePrefix = "Chat History"
@@ -22,6 +23,7 @@ type TUI struct {
 	done     chan struct{}
 	messages chan *arbor.ChatMessage
 	Composer
+	*Editor
 	histState      *HistoryState
 	init           sync.Once
 	editMode       bool
@@ -36,7 +38,7 @@ func NewTUI(client Client) (*TUI, error) {
 	if err != nil {
 		return nil, err
 	}
-	gui.InputEsc = true
+	//gui.InputEsc = true
 	hs, err := NewHistoryState(client)
 	if err != nil {
 		return nil, err
@@ -47,6 +49,7 @@ func NewTUI(client Client) (*TUI, error) {
 		messages:  make(chan *arbor.ChatMessage),
 		histState: hs,
 		Composer:  client,
+		Editor:    NewEditor(),
 	}
 	client.OnReceive(t.Display)
 	t.done = t.mainLoop()
@@ -103,10 +106,14 @@ func (t *TUI) mainLoop() chan struct{} {
 		defer close(done)
 		defer t.Close()
 
-		t.SetManagerFunc(t.layout)
+		makeHist := gocui.ManagerFunc(t.layout)
+		layout := gocui.ManagerFunc(BottomPrimaryLayout(historyView, editView))
+		t.SetManager(t.Editor, makeHist, layout)
 
-		if err := t.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, t.quit); err != nil {
-			log.Println("Failed registering exit keystroke handler", err)
+		for _, binding := range t.Keybindings() {
+			if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
+				log.Printf("Failed registering %s keystroke handler on view %v: %s\n", binding.HandlerName, binding.View, err)
+			}
 		}
 
 		if err := t.MainLoop(); err != nil && err != gocui.ErrQuit {
@@ -267,12 +274,10 @@ func (t *TUI) reRender() {
 // historyMode transitions the TUI to interactively scroll the history.
 // All state change related to that transition should be defined here.
 func (t *TUI) historyMode() error {
-	t.Gui.Cursor = false
-	v, err := t.Gui.View(editView)
+	err := t.Editor.Unfocus(t.Gui)
 	if err != nil {
 		return err
 	}
-	v.Title = preEditViewTitle
 	_, err = t.Gui.SetCurrentView(historyView)
 	if err != nil {
 		return err
@@ -283,14 +288,7 @@ func (t *TUI) historyMode() error {
 // composeMode transitions the TUI to interactively editing messages.
 // All state change related to that transition should be defined here.
 func (t *TUI) composeMode() error {
-	t.Gui.Cursor = true
-	v, err := t.Gui.SetCurrentView(editView)
-	if err != nil {
-		return err
-	}
-	v.Title = midEditViewTitle
-	return nil
-
+	return t.Editor.Focus(t.Gui)
 }
 
 // composeReply starts replying to the current message.
@@ -326,32 +324,6 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
-	keybindings := []struct {
-		View        string
-		Key         interface{}
-		Modifier    gocui.Modifier
-		Handler     func(*gocui.Gui, *gocui.View) error
-		HandlerName string
-	}{
-		{historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown, "cursorDown"},
-		{historyView, 'j', gocui.ModNone, t.cursorDown, "cursorDown"},
-		{historyView, gocui.KeyArrowRight, gocui.ModNone, t.scrollDown, "scrollDown"},
-		{historyView, 'l', gocui.ModNone, t.scrollDown, "scrollDown"},
-		{historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp, "cursorUp"},
-		{historyView, 'k', gocui.ModNone, t.cursorUp, "cursorUp"},
-		{historyView, gocui.KeyArrowLeft, gocui.ModNone, t.scrollUp, "scrollUp"},
-		{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
-		{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
-		{historyView, 'i', gocui.ModNone, t.composeReply, "composeReply"},
-		{historyView, 'r', gocui.ModNone, t.composeReplyToRoot, "composeReplyToRoot"},
-		{historyView, gocui.KeyHome, gocui.ModNone, t.scrollTop, "scrollTop"},
-		{historyView, 'g', gocui.ModNone, t.scrollTop, "scrollTop"},
-		{historyView, gocui.KeyEnd, gocui.ModNone, t.scrollBottom, "scrollBottom"},
-		{historyView, 'G', gocui.ModNone, t.scrollBottom, "scrollBottom"},
-		{historyView, 'q', gocui.ModNone, t.queryNeeded, "queryNeeded"},
-		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
-		{editView, gocui.KeyEsc, gocui.ModNone, t.cancelReply, "cancelReply"},
-	}
 	mX, mY := gui.Size()
 	histMaxX := mX - 1
 	histMaxY := mY - 1
@@ -370,34 +342,8 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		// if you reach this point, you are initializing the view for the first time
 		histView.Title = "Chat History"
 
-		for _, binding := range keybindings {
-			if binding.View == historyView {
-				if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
-					log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
-				}
-			}
-		}
 		if _, err := t.SetCurrentView(historyView); err != nil {
 			log.Println("Failed to set historyView focus", err)
-		}
-	}
-
-	// update view dimensions or create for the first time
-	if v, err := gui.SetView(editView, 0, histMaxY+1, histMaxX, mY-1); err != nil {
-		if err != gocui.ErrUnknownView {
-			log.Println("Error creating editView", err)
-		}
-		// if you reach this point, you are initializing the view for the first time
-		v.Editable = true
-		v.Editor = gocui.DefaultEditor
-		v.Title = preEditViewTitle
-
-		for _, binding := range keybindings {
-			if binding.View == editView {
-				if err := t.SetKeybinding(binding.View, binding.Key, binding.Modifier, binding.Handler); err != nil {
-					log.Printf("Failed registering %s keystroke handler: %v\n", binding.HandlerName, err)
-				}
-			}
 		}
 	}
 
