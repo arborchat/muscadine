@@ -13,8 +13,6 @@ import (
 const historyView = "history"
 const editView = "edit"
 const globalView = ""
-const preEditViewTitle = "Arrows to select, hit enter to reply"
-const midEditViewTitle = "Type your reply, hit enter to send"
 const histViewTitlePrefix = "Chat History"
 
 // TUI is the default terminal user interface implementation for this client
@@ -287,20 +285,24 @@ func (t *TUI) historyMode() error {
 
 // composeMode transitions the TUI to interactively editing messages.
 // All state change related to that transition should be defined here.
-func (t *TUI) composeMode() error {
-	return t.Editor.Focus(t.Gui)
+func (t *TUI) composeMode(replyTo *arbor.ChatMessage) error {
+	return t.Editor.Focus(t.Gui, replyTo)
 }
 
 // composeReply starts replying to the current message.
 func (t *TUI) composeReply(c *gocui.Gui, v *gocui.View) error {
-	return t.composeMode()
+	msg := t.histState.Get(t.histState.Current())
+	return t.composeMode(msg)
 }
 
 // composeReplyToRoot starts replying to the earliest known message (root, unless something is very wrong).
 func (t *TUI) composeReplyToRoot(c *gocui.Gui, v *gocui.View) error {
-	t.histState.CursorBeginning()
-	t.reRender()
-	return t.composeMode()
+	root, err := t.histState.Root()
+	if err != nil {
+		return err
+	}
+	rootMsg := t.histState.Get(root)
+	return t.composeMode(rootMsg)
 }
 
 // cancelReply exits compose mode and returns to history mode.
@@ -318,7 +320,7 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	v.Clear()
 	v.SetCursor(0, 0)
 	v.SetOrigin(0, 0)
-	t.Composer.Reply(t.histState.Current(), content[:len(content)-1])
+	t.Composer.Reply(t.Editor.ReplyTo.UUID, content[:len(content)-1])
 	return t.historyMode()
 }
 
