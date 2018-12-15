@@ -273,7 +273,7 @@ func (t *TUI) reRender() {
 // historyMode transitions the TUI to interactively scroll the history.
 // All state change related to that transition should be defined here.
 func (t *TUI) historyMode() error {
-	err := t.Editor.Unfocus(t.Gui)
+	err := t.Editor.Unfocus()
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (t *TUI) historyMode() error {
 // composeMode transitions the TUI to interactively editing messages.
 // All state change related to that transition should be defined here.
 func (t *TUI) composeMode(replyTo *arbor.ChatMessage) error {
-	return t.Editor.Focus(t.Gui, replyTo)
+	return t.Editor.Focus(replyTo)
 }
 
 // composeReply starts replying to the current message.
