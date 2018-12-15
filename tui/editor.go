@@ -14,12 +14,22 @@ const midEditViewTitle = "Type your reply, hit enter to send"
 // but not its position within the TUI.
 // Its size when empty will be 1 internal row, but will expand as content
 // is added.
+//
+// Insofar as it is possible, Editor is decoupled from the *gocui.View.
+// Their only interactions are in the Layout function, which synchronizes
+// the state of this controller with the state of the view, and the
+// Action* methods defined on the editor (these are meant as keystroke
+// handlers)
 type Editor struct {
 	name    string
 	h       int
 	Title   string
 	ReplyTo *arbor.ChatMessage
 	Content string
+	// Each of these booleans represents whether or not a state change is requested next time
+	// the Layout method is invoked. This decouples the Editor type from the view that it manages
+	// except for Layout and the Action functions
+	focus, unfocus, clear bool
 }
 
 // NewEditor creates a new controller for an Editor view.
@@ -30,48 +40,39 @@ func NewEditor() *Editor {
 // Focus lets the Editor perform any changes needed when it gains focus. It should
 // always be called from within a gocui.Update function (or similar) so that the
 // changes are rendered immediately
-func (e *Editor) Focus(g *gocui.Gui, replyTo *arbor.ChatMessage) error {
+func (e *Editor) Focus(replyTo *arbor.ChatMessage) error {
 	e.Title = midEditViewTitle
 	e.ReplyTo = replyTo
-	g.Cursor = true
-	_, err := g.SetCurrentView(e.name)
-	if err != nil {
-		return err
-	}
+	e.focus = true
 	return nil
-
 }
 
 // Unfocus lets the Editor perform any changes needed when it loses focus. It should be
 // called under the same conditions as `Focus`.
-func (e *Editor) Unfocus(g *gocui.Gui) error {
+func (e *Editor) Unfocus() error {
 	e.Title = preEditViewTitle
 	e.ReplyTo = nil
-	g.Cursor = false
+	e.unfocus = true
 	return nil
 }
 
 // Clear erases the current contents of the editor. This should be performed within a gocui.Update
 // context.
-func (e *Editor) Clear(g *gocui.Gui) error {
-	v, err := g.View(e.name)
-	if err != nil {
-		return err
-	}
-	v.Clear()
+func (e *Editor) Clear() error {
+	e.clear = true
 	e.Content = ""
 	e.ReplyTo = nil
 	return nil
 }
 
-// insertNewline adds a newline character into the editor at the current cursor position.
-func (e *Editor) insertNewline(g *gocui.Gui, v *gocui.View) error {
+// ActionInsertNewline adds a newline character into the editor at the current cursor position.
+func (e *Editor) ActionInsertNewline(g *gocui.Gui, v *gocui.View) error {
 	v.EditNewLine()
 	return nil
 }
 
-// insertTab adds a tab character into the editor at the current cursor position.
-func (e *Editor) insertTab(g *gocui.Gui, v *gocui.View) error {
+// ActionInsertTab adds a tab character into the editor at the current cursor position.
+func (e *Editor) ActionInsertTab(g *gocui.Gui, v *gocui.View) error {
 	v.EditWrite(' ')
 	v.EditWrite(' ')
 	v.EditWrite(' ')
@@ -82,6 +83,8 @@ func (e *Editor) insertTab(g *gocui.Gui, v *gocui.View) error {
 // Layout is responsible for setting the desired view dimensions for the
 // Editor, but *not* for setting its position. That is handled by a higher-order
 // layout function.
+// Layout also executes any state changes the editor requests, such as gaining focus
+// or clearing the Editor's contents.
 func (e *Editor) Layout(g *gocui.Gui) error {
 	// If the new has already been initialized, update its height to reflect its
 	// current contents
@@ -107,6 +110,19 @@ func (e *Editor) Layout(g *gocui.Gui) error {
 		v.Title = e.Title
 	} else {
 		v.Title = e.Title + " | replying to " + e.ReplyTo.Username
+	}
+
+	if e.focus {
+		g.Cursor = true
+		g.SetCurrentView(e.name)
+		e.focus = false
+	} else if e.unfocus {
+		g.Cursor = false
+		e.unfocus = false
+	}
+	if e.clear {
+		v.Clear()
+		e.clear = false
 	}
 	return nil
 }
