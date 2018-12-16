@@ -3,7 +3,9 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
+	"time"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
@@ -32,6 +34,9 @@ type NetClient struct {
 	receiveHandler    func(*arbor.ChatMessage)
 	stopSending       chan struct{}
 	stopReceiving     chan struct{}
+	// pingServer is used to request that we attempt to force a response from the server.
+	// This allows us to guard against a stale connection.
+	pingServer chan struct{}
 }
 
 // NewNetClient creates a NetClient configured to communicate with the server at the
@@ -54,6 +59,7 @@ func NewNetClient(address, username string, history *archive.Archive) (*NetClien
 		Composer:      Composer{username: username, sendChan: composerOut},
 		stopSending:   stopSending,
 		stopReceiving: stopReceiving,
+		pingServer:    make(chan struct{}),
 	}
 	return nc, nil
 }
@@ -120,6 +126,10 @@ func (nc *NetClient) send() {
 			} else if errored {
 				continue
 			}
+		case <-nc.pingServer:
+			// query for the root message
+			root, _ := nc.Archive.Root()
+			go nc.Composer.Query(root)
 		case <-nc.stopSending:
 			return
 		}
@@ -128,11 +138,27 @@ func (nc *NetClient) send() {
 
 func (nc *NetClient) receive() {
 	errored := false
+	tick := time.NewTicker(time.Second * 1)
+	ticks := 0
 	for {
 		m := new(arbor.ProtocolMessage)
 		select {
 		case <-nc.stopReceiving:
 			return
+		case <-tick.C:
+			ticks++
+			log.Println("tick")
+			if ticks == 1 {
+				// we haven't heard from the server in 30 seconds,
+				// try to interact.
+				log.Println("pre")
+				nc.pingServer <- struct{}{}
+				log.Println("post")
+			} else if ticks > 1 {
+				// we haven't heard from the server in a minute,
+				// we're probably disconnected.
+				go nc.Disconnect()
+			}
 		default:
 			err := nc.ReadWriteCloser.Read(m)
 			if !errored && err != nil {
@@ -141,6 +167,12 @@ func (nc *NetClient) receive() {
 			} else if errored {
 				continue
 			}
+			// reset our ticker to wait until 30 seconds from when we
+			// received this message.
+			tick.Stop()
+			tick = time.NewTicker(time.Second * 1)
+			ticks = 0
+			// process the message
 			switch m.Type {
 			case arbor.NewMessageType:
 				if nc.receiveHandler != nil {
