@@ -66,7 +66,7 @@ func (h *History) ActionCursorDown(c *gocui.Gui, v *gocui.View) error {
 func (h *History) ActionScrollTop(c *gocui.Gui, v *gocui.View) error {
 	currentX, _ := v.Origin()
 	h.CursorBeginning()
-	h.reRender()
+	h.renderView(v)
 	return v.SetOrigin(currentX, 0)
 }
 
@@ -81,7 +81,7 @@ func (h *History) ActionScrollBottom(c *gocui.Gui, v *gocui.View) error {
 	if currentY < (maxY-1) && maxY > viewHeight {
 		return v.SetOrigin(currentX, maxY-viewHeight)
 	}
-	h.reRender()
+	h.renderView(v)
 	return nil
 }
 
@@ -127,6 +127,7 @@ func (h *History) renderView(v *gocui.View) error {
 func (h *History) Layout(g *gocui.Gui) error {
 	// Set the view's dimensions
 	width, height := g.Size()
+	h.SetDimensions(height-1, width-1)
 	v, err := g.SetView(h.name, 0, 0, width-1, height-1)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
