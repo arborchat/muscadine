@@ -178,10 +178,15 @@ func (nc *NetClient) readChannel() chan struct {
 func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 	switch m.Type {
 	case arbor.NewMessageType:
-		if nc.receiveHandler != nil {
-			nc.receiveHandler(m.ChatMessage)
-			// ask notificationEngine to display the message
-			notificationEngine(nc, m.ChatMessage)
+		if !nc.Archive.Has(m.UUID) {
+			if nc.receiveHandler != nil {
+				nc.receiveHandler(m.ChatMessage)
+				// ask notificationEngine to display the message
+				notificationEngine(nc, m.ChatMessage)
+			}
+			if !nc.Archive.Has(m.Parent) {
+				nc.Query(m.Parent)
+			}
 		}
 	case arbor.WelcomeType:
 		if !nc.Has(m.Root) {
