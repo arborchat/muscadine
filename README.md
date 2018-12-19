@@ -54,8 +54,7 @@ The keybindings are:
     - q - query the server for any missing chat history (only necessary if top status bar indicates)
 - Compose Mode:
     - enter - send your message
-    - alt+enter - type a literal newline
-    - ctrl+\ - return to history mode
+    - escape - return to history mode
 - Global:
     - ctrl+c - quit
 
