@@ -30,11 +30,19 @@ type Editor struct {
 	// the Layout method is invoked. This decouples the Editor type from the view that it manages
 	// except for Layout and the Action functions
 	focus, unfocus, clear bool
+	// literalEnter is whether or not the enter key is interpreted literally in the editor.
+	literalEnter bool
 }
 
 // NewEditor creates a new controller for an Editor view.
 func NewEditor() *Editor {
 	return &Editor{name: editView, h: borderHeight, Title: preEditViewTitle}
+}
+
+// EnterIsLiteral returns whether or not pressing the "Enter" key should insert a newline
+// into the editor.
+func (e *Editor) EnterIsLiteral() bool {
+	return e.literalEnter
 }
 
 // Focus lets the Editor perform any changes needed when it gains focus. It should
@@ -80,6 +88,12 @@ func (e *Editor) ActionInsertTab(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+// ActionTogglePasteMode toggles whether or not the <Enter> key is interpreted literally.
+func (e *Editor) ActionTogglePasteMode(g *gocui.Gui, v *gocui.View) error {
+	e.literalEnter = !e.literalEnter
+	return nil
+}
+
 // Layout is responsible for setting the desired view dimensions for the
 // Editor, but *not* for setting its position. That is handled by a higher-order
 // layout function.
@@ -111,6 +125,9 @@ func (e *Editor) Layout(g *gocui.Gui) error {
 		v.Title = e.Title
 	} else {
 		v.Title = e.Title + " | replying to " + e.ReplyTo.Username
+	}
+	if e.EnterIsLiteral() {
+		v.Title += " <paste mode>"
 	}
 
 	if e.focus {
@@ -145,8 +162,6 @@ func (e *EditCore) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifie
 		v.EditDelete(false)
 	case key == gocui.KeyInsert:
 		v.Overwrite = !v.Overwrite
-	case key == gocui.KeyEnter:
-		v.EditNewLine()
 	case key == gocui.KeyArrowDown:
 		v.MoveCursor(0, 1, false)
 	case key == gocui.KeyArrowUp:

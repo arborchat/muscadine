@@ -311,6 +311,17 @@ func (t *TUI) cancelReply(c *gocui.Gui, v *gocui.View) error {
 	return t.historyMode()
 }
 
+// handleEnter is intended to be used *only* for handling the "Enter" keypress. It allows the Editor
+// to dictate whether or not the keypress should be interpreted literally. The results of that
+// decision must be handled by the TUI as a whole, since only the TUI can actually perform the
+// sendReply action if that key should not be literal.
+func (t *TUI) handleEnter(c *gocui.Gui, v *gocui.View) error {
+	if t.Editor.EnterIsLiteral() {
+		return t.Editor.ActionInsertNewline(c, v)
+	}
+	return t.sendReply(c, v)
+}
+
 // sendReply starts replying to the current message.
 func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	content := v.Buffer()

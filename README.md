@@ -53,8 +53,8 @@ The keybindings are:
     - end/G - jump to bottom of history
     - q - query the server for any missing chat history (only necessary if top status bar indicates)
 - Compose Mode:
-    - enter - send your message
-    - alt+enter - type a literal newline
+    - enter - send your message (unless in paste mode)
+    - ctrl+p - toggle "paste mode", in which the enter key will *not* send the message, but instead type a newline
     - ctrl+\ - return to history mode
 - Global:
     - ctrl+c - quit
