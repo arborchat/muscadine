@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/jroimartin/gocui"
+import "github.com/whereswaldon/gocui"
 
 // BottomPrimaryLayout manages two gocui.Views within a gocui.Gui by respecting the size
 // requests of the bottom view at the expense of the size of the top. The bottom view will

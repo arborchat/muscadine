@@ -34,12 +34,20 @@
   version = "v5.0"
 
 [[projects]]
-  digest = "1:114ecad51af93a73ae6781fd0d0bc28e52b433c852b84ab4b4c109c15e6c6b6d"
-  name = "github.com/jroimartin/gocui"
-  packages = ["."]
+  branch = "master"
+  digest = "1:f14d1b50e0075fb00177f12a96dd7addf93d1e2883c25befd17285b779549795"
+  name = "github.com/gopherjs/gopherjs"
+  packages = ["js"]
   pruneopts = "UT"
-  revision = "c055c87ae801372cd74a0839b972db4f7697ae5f"
-  version = "v0.4.0"
+  revision = "d547d1d9531ed93dbdebcbff7f83e7c876a1e0ee"
+
+[[projects]]
+  digest = "1:0b226f71747698cd3b03156781c849c3df46e229eef5c3682e182558cf34e8f0"
+  name = "github.com/gopherjs/gopherwasm"
+  packages = ["js"]
+  pruneopts = "UT"
+  revision = "b0e1786f520333e4546f02930c5ca8a929b38841"
+  version = "v1.0.1"
 
 [[projects]]
   digest = "1:f2ffb104978341aadea72e33f375d42c5e1954f3f6f489f2950b18a4a494cff3"
@@ -122,6 +130,14 @@
   version = "v0.8.0"
 
 [[projects]]
+  branch = "flush-fix-paste"
+  digest = "1:235bbcd980b35106712f2382a10f833e1eeb3128ab0b13e3ad20d84cb6e766fe"
+  name = "github.com/whereswaldon/gocui"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "101990862c62b1156b5f048c02eb2ddf7cdbe1e6"
+
+[[projects]]
   branch = "master"
   digest = "1:5193d913046443e59093d66a97a40c51f4a5ea4ceba60f3b3ecf89694de5d16f"
   name = "golang.org/x/net"
@@ -193,10 +209,10 @@
     "github.com/arborchat/arbor-go",
     "github.com/bbrks/wrap",
     "github.com/gen2brain/beeep",
-    "github.com/jroimartin/gocui",
     "github.com/mattn/go-runewidth",
     "github.com/multiformats/go-multicodec/json",
     "github.com/onsi/gomega",
+    "github.com/whereswaldon/gocui",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

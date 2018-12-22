@@ -34,8 +34,8 @@
   version = "2.3.0"
 
 [[constraint]]
-  name = "github.com/jroimartin/gocui"
-  version = "0.4.0"
+  name = "github.com/whereswaldon/gocui"
+  branch = "flush-fix-paste"
 
 [[constraint]]
   name = "github.com/mattn/go-runewidth"

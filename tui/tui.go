@@ -8,7 +8,7 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/types"
-	"github.com/jroimartin/gocui"
+	"github.com/whereswaldon/gocui"
 )
 
 const historyView = "history"

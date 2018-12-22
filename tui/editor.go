@@ -2,7 +2,7 @@ package tui
 
 import (
 	arbor "github.com/arborchat/arbor-go"
-	"github.com/jroimartin/gocui"
+	"github.com/whereswaldon/gocui"
 )
 
 const borderHeight = 2
@@ -102,8 +102,9 @@ func (e *Editor) Layout(g *gocui.Gui) error {
 		}
 		// If we are creating the view for the first time, configure its settings
 		v.Editable = true
-		v.Editor = gocui.DefaultEditor
+		v.Editor = &EditCore{}
 		v.Frame = true
+		v.Wrap = false
 	}
 	// update the title regardless of whether this is the first-time initialization
 	if e.ReplyTo == nil {
@@ -125,4 +126,34 @@ func (e *Editor) Layout(g *gocui.Gui) error {
 		e.clear = false
 	}
 	return nil
+}
+
+type EditCore struct {
+}
+
+// Edit handles a single keypress in the editor
+// This is a modification of gocui's simpleEditor function.
+func (e *EditCore) Edit(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
+	switch {
+	case ch != 0 && mod == 0:
+		v.EditWrite(ch)
+	case key == gocui.KeySpace:
+		v.EditWrite(' ')
+	case key == gocui.KeyBackspace || key == gocui.KeyBackspace2:
+		v.EditDelete(true)
+	case key == gocui.KeyDelete:
+		v.EditDelete(false)
+	case key == gocui.KeyInsert:
+		v.Overwrite = !v.Overwrite
+	case key == gocui.KeyEnter:
+		v.EditNewLine()
+	case key == gocui.KeyArrowDown:
+		v.MoveCursor(0, 1, false)
+	case key == gocui.KeyArrowUp:
+		v.MoveCursor(0, -1, false)
+	case key == gocui.KeyArrowLeft:
+		v.MoveCursor(-1, 0, false)
+	case key == gocui.KeyArrowRight:
+		v.MoveCursor(1, 0, false)
+	}
 }

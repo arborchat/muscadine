@@ -1,6 +1,6 @@
 package tui
 
-import "github.com/jroimartin/gocui"
+import "github.com/whereswaldon/gocui"
 
 // Binding represents a binding between a keypress and a handler function
 type Binding struct {
