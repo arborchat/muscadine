@@ -17,11 +17,15 @@ func (t *TUI) Keybindings() []Binding {
 		{globalView, gocui.KeyCtrlC, gocui.ModNone, t.quit, "quit"},
 		{historyView, gocui.KeyArrowDown, gocui.ModNone, t.cursorDown, "cursorDown"},
 		{historyView, 'j', gocui.ModNone, t.cursorDown, "cursorDown"},
+		{historyView, gocui.KeyCtrlN, gocui.ModNone, t.cursorDown, "cursorDown"},
 		{historyView, gocui.KeyArrowRight, gocui.ModNone, t.scrollDown, "scrollDown"},
+		{historyView, gocui.KeyCtrlV, gocui.ModNone, t.scrollDown, "scrollDown"},
 		{historyView, 'l', gocui.ModNone, t.scrollDown, "scrollDown"},
 		{historyView, gocui.KeyArrowUp, gocui.ModNone, t.cursorUp, "cursorUp"},
+		{historyView, gocui.KeyCtrlP, gocui.ModNone, t.cursorUp, "cursorUp"},
 		{historyView, 'k', gocui.ModNone, t.cursorUp, "cursorUp"},
 		{historyView, gocui.KeyArrowLeft, gocui.ModNone, t.scrollUp, "scrollUp"},
+		{historyView, 'v', gocui.ModAlt, t.scrollUp, "scrollUp"},
 		{historyView, 'h', gocui.ModNone, t.scrollUp, "scrollUp"},
 		{historyView, gocui.KeyEnter, gocui.ModNone, t.composeReply, "composeReply"},
 		{historyView, 'i', gocui.ModNone, t.composeReply, "composeReply"},
@@ -36,5 +40,6 @@ func (t *TUI) Keybindings() []Binding {
 		{editView, gocui.KeyTab, gocui.ModNone, t.Editor.ActionInsertTab, "InsertTab"},
 		{editView, gocui.KeyEnter, gocui.ModNone, t.sendReply, "sendReply"},
 		{editView, gocui.KeyCtrlBackslash, gocui.ModNone, t.cancelReply, "cancelReply"},
+		{editView, gocui.KeyCtrlG, gocui.ModNone, t.cancelReply, "cancelReply"},
 	}
 }
