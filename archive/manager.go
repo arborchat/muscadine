@@ -23,7 +23,8 @@ func OpenFile(path string) (io.ReadWriteCloser, error) {
 }
 
 // NewManager creates a Manager that will use the provided path as persistent
-// storage for its history.
+// storage for its history. It defaults to the OpenFile implementation of Opener,
+// and you only need to call SetOpener for testing.
 func NewManager(path string) (*Manager, error) {
 	if path == "" {
 		return nil, fmt.Errorf("Path may not be the empty string")
@@ -47,9 +48,13 @@ func (m *Manager) SetOpener(o Opener) error {
 // Populate loads the managed archive with content from the manager's configured
 // persistent storage.
 func (m *Manager) Populate() error {
-	_, err := m.opener(m.path)
+	file, err := m.opener(m.path)
 	if err != nil {
 		return err
 	}
-	return nil
+	if file == nil {
+		return fmt.Errorf("Opener returned no error but nil file")
+	}
+	defer file.Close()
+	return m.Archive.Load(file)
 }

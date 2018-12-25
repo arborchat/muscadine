@@ -1,11 +1,17 @@
 package archive_test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"testing"
+	"time"
 
+	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
+	uuid "github.com/nu7hatch/gouuid"
 	"github.com/onsi/gomega"
 )
 
@@ -40,7 +46,7 @@ func TestSetOpener(t *testing.T) {
 		go func() {
 			called <- struct{}{}
 		}()
-		return nil, nil
+		return memoryArchiveOrSkip(t, "foo"), nil
 	})
 	g.Expect(err).To(gomega.BeNil())
 	err = mgr.Populate()
@@ -74,4 +80,74 @@ func TestSetOpenerError(t *testing.T) {
 	g.Expect(err).To(gomega.BeNil())
 	err = mgr.Populate()
 	g.Expect(err).ToNot(gomega.BeNil())
+}
+
+// TestSetOpenerNil ensures that an opener function that returns two nil results
+// simply makes Populate() error.
+func TestSetOpenerNil(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return nil, nil
+	})
+	g.Expect(err).To(gomega.BeNil())
+	err = mgr.Populate()
+	g.Expect(err).ToNot(gomega.BeNil())
+}
+
+// memoryArchiveOrSkip creates an in-memory file-like object to use as a test history
+// file. It accepts the UUID of the message that it inserts as a parameter for testing
+// whether the message is later present in an Archive
+func memoryArchiveOrSkip(t *testing.T, id string) io.ReadWriteCloser {
+	a := archive.New()
+	err := a.Add(&arbor.ChatMessage{UUID: id, Parent: "bar", Username: "baz", Content: "bin", Timestamp: time.Now().Unix()})
+	if err != nil {
+		t.Skip(err)
+	}
+	buf := new(bytes.Buffer)
+	err = a.Persist(buf)
+	if err != nil {
+		t.Skip(err)
+	}
+	return arbor.NoopRWCloser(buf)
+}
+
+// TestPopulate ensures that data is in the archive after Populating from a non-empty
+// persistent storage.
+func TestPopulate(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	id := "foo"
+	g.Expect(mgr.Has(id)).ToNot(gomega.BeTrue())
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return memoryArchiveOrSkip(t, id), nil
+	})
+	if err != nil {
+		t.Skip(err)
+	}
+	err = mgr.Populate()
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(mgr.Has(id)).To(gomega.BeTrue())
+}
+
+// TestOpenFile checks that the OpenFile function returns a valid file when given valid input.
+func TestOpenFile(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	id, err := uuid.NewV4()
+	if err != nil {
+		t.Skip(err)
+	}
+	idString := id.String()
+	data := []byte(idString)
+	err = ioutil.WriteFile(idString, data, 0600)
+	if err != nil {
+		t.Skip(err)
+	}
+	file, err := archive.OpenFile(idString)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(file).ToNot(gomega.BeNil())
+	err = file.Close()
+	g.Expect(err).To(gomega.BeNil())
+	err = os.Remove(idString)
+	g.Expect(err).To(gomega.BeNil())
 }
