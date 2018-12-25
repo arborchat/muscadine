@@ -47,8 +47,8 @@ The keybindings are:
 - History Mode
     - up/down/j/k - scroll the selected message up and down
     - left/right/h/l - scroll the viewport (not the cursor) up and down
-    - enter/i - start a reply to the selected message
-    - r - reply to the earliest known message (the root message)
+    - enter/i/r - start a reply to the selected message
+    - n - reply to the earliest known message (the root message)
     - home/g - jump to top of history
     - end/G - jump to bottom of history
     - q - query the server for any missing chat history (only necessary if top status bar indicates)
