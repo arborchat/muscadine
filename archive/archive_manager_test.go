@@ -69,32 +69,6 @@ func TestSetOpenerInvalid(t *testing.T) {
 	g.Expect(err).ToNot(gomega.BeNil())
 }
 
-// TestSetOpenerError ensures that openers that generate errors cause Populate
-// to return an error.
-func TestSetOpenerError(t *testing.T) {
-	g := gomega.NewGomegaWithT(t)
-	mgr := mgrOrSkip(t, "path")
-	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
-		return nil, fmt.Errorf("always error")
-	})
-	g.Expect(err).To(gomega.BeNil())
-	err = mgr.Populate()
-	g.Expect(err).ToNot(gomega.BeNil())
-}
-
-// TestSetOpenerNil ensures that an opener function that returns two nil results
-// simply makes Populate() error.
-func TestSetOpenerNil(t *testing.T) {
-	g := gomega.NewGomegaWithT(t)
-	mgr := mgrOrSkip(t, "path")
-	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
-		return nil, nil
-	})
-	g.Expect(err).To(gomega.BeNil())
-	err = mgr.Populate()
-	g.Expect(err).ToNot(gomega.BeNil())
-}
-
 // memoryArchiveOrSkip creates an in-memory file-like object to use as a test history
 // file. It accepts the UUID of the message that it inserts as a parameter for testing
 // whether the message is later present in an Archive
@@ -128,6 +102,81 @@ func TestPopulate(t *testing.T) {
 	err = mgr.Populate()
 	g.Expect(err).To(gomega.BeNil())
 	g.Expect(mgr.Has(id)).To(gomega.BeTrue())
+}
+
+// TestPopulateError ensures that openers that generate errors cause Populate
+// to return an error.
+func TestPopulateError(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return nil, fmt.Errorf("always error")
+	})
+	g.Expect(err).To(gomega.BeNil())
+	err = mgr.Populate()
+	g.Expect(err).ToNot(gomega.BeNil())
+}
+
+// TestPopulateDoubleNil ensures that an opener function that returns two nil results
+// simply makes Populate() error.
+func TestPopulateDoubleNil(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return nil, nil
+	})
+	g.Expect(err).To(gomega.BeNil())
+	err = mgr.Populate()
+	g.Expect(err).ToNot(gomega.BeNil())
+}
+
+// TestSave ensures that the archive is persisted after calling Save().
+func TestSave(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	buffer := new(bytes.Buffer)
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return arbor.NoopRWCloser(buffer), nil
+	})
+	if err != nil {
+		t.Skip(err)
+	}
+	if err := mgr.Add(&arbor.ChatMessage{UUID: "foo", Username: "bar", Content: "bin", Timestamp: time.Now().Unix()}); err != nil {
+		t.Skip(err)
+	}
+	err = mgr.Save()
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(buffer.Len() > 0).To(gomega.BeTrue())
+}
+
+// TestSaveError ensures that the Save() method propagates errors when the Opener
+// fails.
+func TestSaveError(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return nil, fmt.Errorf("always fail")
+	})
+	if err != nil {
+		t.Skip(err)
+	}
+	err = mgr.Save()
+	g.Expect(err).ToNot(gomega.BeNil())
+}
+
+// TestSaveDoubleNil ensures that the Save() doesn't crash when an opener doesn't
+// error but also fails to provide an io.ReadWriteCloser
+func TestSaveDoubleNil(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	mgr := mgrOrSkip(t, "path")
+	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
+		return nil, nil
+	})
+	if err != nil {
+		t.Skip(err)
+	}
+	err = mgr.Save()
+	g.Expect(err).ToNot(gomega.BeNil())
 }
 
 // TestOpenFile checks that the OpenFile function returns a valid file when given valid input.

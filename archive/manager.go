@@ -58,3 +58,8 @@ func (m *Manager) Populate() error {
 	defer file.Close()
 	return m.Archive.Load(file)
 }
+
+// Save stores the managed archive's state into the configured persistent storage.
+func (m *Manager) Save() error {
+	return nil
+}
