@@ -6,6 +6,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 	"testing"
 	"time"
 
@@ -198,5 +199,25 @@ func TestOpenFile(t *testing.T) {
 	err = file.Close()
 	g.Expect(err).To(gomega.BeNil())
 	err = os.Remove(idString)
+	g.Expect(err).To(gomega.BeNil())
+}
+
+// TestOpenFileCreate checks that the OpenFile function will attempt to create the file
+// and its parent directories if the file does not exist.
+func TestOpenFileCreate(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	id, err := uuid.NewV4()
+	if err != nil {
+		t.Skip(err)
+	}
+	idString := id.String()
+	tmpDir := os.TempDir()
+	tmpPath := path.Join(tmpDir, idString, idString)
+	file, err := archive.OpenFile(tmpPath)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(file).ToNot(gomega.BeNil())
+	err = file.Close()
+	g.Expect(err).To(gomega.BeNil())
+	err = os.Remove(tmpPath)
 	g.Expect(err).To(gomega.BeNil())
 }

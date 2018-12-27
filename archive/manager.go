@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path"
 )
 
 // Manager facilitates populating an Archive from a persistent data store and
@@ -18,8 +19,18 @@ type Manager struct {
 type Opener func(string) (io.ReadWriteCloser, error)
 
 // OpenFile is an Opener that reads a file from disk.
-func OpenFile(path string) (io.ReadWriteCloser, error) {
-	return os.Open(path)
+func OpenFile(histPath string) (io.ReadWriteCloser, error) {
+	file, err := os.Open(histPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			if err := os.MkdirAll(path.Dir(histPath), 0700); err != nil {
+				return nil, err
+			}
+			return os.Create(histPath)
+		}
+		return nil, err
+	}
+	return file, err
 }
 
 // NewManager creates a Manager that will use the provided path as persistent
