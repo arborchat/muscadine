@@ -37,7 +37,7 @@ func mgrOrSkip(t *testing.T, path string) *archive.Manager {
 }
 
 // TestSetOpener ensures that the SetOpener method accepts input
-// calls the Opener when Populate() is invoked.
+// calls the Opener when Load() is invoked.
 func TestSetOpener(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	mgr := mgrOrSkip(t, "path")
@@ -49,7 +49,7 @@ func TestSetOpener(t *testing.T) {
 		return memoryArchiveOrSkip(t, "foo"), nil
 	})
 	g.Expect(err).To(gomega.BeNil())
-	err = mgr.Populate()
+	err = mgr.Load()
 	g.Expect(err).To(gomega.BeNil())
 	g.Eventually(func() bool {
 		select {
@@ -86,9 +86,9 @@ func memoryArchiveOrSkip(t *testing.T, id string) io.ReadWriteCloser {
 	return arbor.NoopRWCloser(buf)
 }
 
-// TestPopulate ensures that data is in the archive after Populating from a non-empty
+// TestLoad ensures that data is in the archive after Populating from a non-empty
 // persistent storage.
-func TestPopulate(t *testing.T) {
+func TestLoad(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	mgr := mgrOrSkip(t, "path")
 	id := "foo"
@@ -99,34 +99,34 @@ func TestPopulate(t *testing.T) {
 	if err != nil {
 		t.Skip(err)
 	}
-	err = mgr.Populate()
+	err = mgr.Load()
 	g.Expect(err).To(gomega.BeNil())
 	g.Expect(mgr.Has(id)).To(gomega.BeTrue())
 }
 
-// TestPopulateError ensures that openers that generate errors cause Populate
+// TestLoadError ensures that openers that generate errors cause Load
 // to return an error.
-func TestPopulateError(t *testing.T) {
+func TestLoadError(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	mgr := mgrOrSkip(t, "path")
 	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
 		return nil, fmt.Errorf("always error")
 	})
 	g.Expect(err).To(gomega.BeNil())
-	err = mgr.Populate()
+	err = mgr.Load()
 	g.Expect(err).ToNot(gomega.BeNil())
 }
 
-// TestPopulateDoubleNil ensures that an opener function that returns two nil results
-// simply makes Populate() error.
-func TestPopulateDoubleNil(t *testing.T) {
+// TestLoadDoubleNil ensures that an opener function that returns two nil results
+// simply makes Load() error.
+func TestLoadDoubleNil(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	mgr := mgrOrSkip(t, "path")
 	err := mgr.SetOpener(func(string) (io.ReadWriteCloser, error) {
 		return nil, nil
 	})
 	g.Expect(err).To(gomega.BeNil())
-	err = mgr.Populate()
+	err = mgr.Load()
 	g.Expect(err).ToNot(gomega.BeNil())
 }
 

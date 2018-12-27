@@ -48,5 +48,5 @@ type Archive interface {
 	Root() (string, error)
 	Add(message *arbor.ChatMessage) error
 	Persist(storage io.Writer) error
-	Load(storage io.Reader) error
+	Populate(storage io.Reader) error
 }

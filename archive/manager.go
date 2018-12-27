@@ -45,9 +45,9 @@ func (m *Manager) SetOpener(o Opener) error {
 	return nil
 }
 
-// Populate loads the managed archive with content from the manager's configured
+// Load loads the managed archive with content from the manager's configured
 // persistent storage.
-func (m *Manager) Populate() error {
+func (m *Manager) Load() error {
 	file, err := m.opener(m.path)
 	if err != nil {
 		return err
@@ -56,10 +56,18 @@ func (m *Manager) Populate() error {
 		return fmt.Errorf("Opener returned no error but nil file")
 	}
 	defer file.Close()
-	return m.Archive.Load(file)
+	return m.Archive.Populate(file)
 }
 
 // Save stores the managed archive's state into the configured persistent storage.
 func (m *Manager) Save() error {
-	return nil
+	file, err := m.opener(m.path)
+	if err != nil {
+		return err
+	}
+	if file == nil {
+		return fmt.Errorf("Opener returned no error but nil file")
+	}
+	defer file.Close()
+	return m.Archive.Persist(file)
 }

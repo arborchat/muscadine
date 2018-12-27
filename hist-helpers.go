@@ -14,7 +14,7 @@ func loadHist(history types.Archive, histfile string) {
 			log.Println("Error opening history", err)
 		} else {
 			defer file.Close()
-			if err = history.Load(file); err != nil {
+			if err = history.Populate(file); err != nil {
 				log.Println("Error loading history", err)
 			} else {
 				log.Println("History loaded from", file.Name())
