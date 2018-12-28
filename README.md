@@ -58,3 +58,20 @@ The keybindings are:
 - Global:
     - ctrl+c - quit
 
+## Notifications
+
+you can add -notify to your list of parameters to set a notification policy
+
+Example:
+```
+~/go/bin/muscadine -username $USER -notify 1 <IP:Port>
+```
+In this example, the notify flag is set to 1.
+
+The notification policy is set by an id number.
+Here are all of the notification policies:
+- 0 = Never show notifications
+- 1 = Show for all new messages
+- 2 = Only when someone mentions or replies to your message
+- 3 = Only show a notification when mentioned
+- 4 = Only show a notification when someone replies to your message
