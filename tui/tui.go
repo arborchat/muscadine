@@ -37,7 +37,7 @@ func NewTUI(client types.Client) (*TUI, error) {
 	if err != nil {
 		return nil, err
 	}
-	//gui.InputEsc = true
+	gui.InputEsc = true
 	hs, err := NewHistoryState(client)
 	if err != nil {
 		return nil, err
