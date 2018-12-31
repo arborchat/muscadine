@@ -327,3 +327,35 @@ func TestNeeded(t *testing.T) {
 		}
 	}
 }
+
+// TestLongHistNeeded is a regression test that ensures that a very long message history with many unknown
+// parents doesn't crash the client. (github.com/arborchat/muscadine/issues/61)
+func TestLongHistNeeded(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	a := newOrSkip(t)
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	// add lots of messages with known parents
+	for i := 0; i < 100; i++ {
+		message.Parent = message.UUID   // make a child of the previous iteration's message
+		message.UUID += "a"             // ensure new id each iteration
+		added := new(arbor.ChatMessage) // allocate new memory for message so all pointers don't go to same address
+		*added = message
+		addOrSkip(t, a, added)
+	}
+	// add ten messages with unknown parents
+	for i := 0; i < 10; i++ {
+		message.Parent += "b"           // make a child of the previous iteration's message
+		message.UUID += "a"             // ensure new id each iteration
+		added := new(arbor.ChatMessage) // allocate new memory for message so all pointers don't go to same address
+		*added = message
+		addOrSkip(t, a, added)
+	}
+	needed := a.Needed(5)
+	g.Expect(len(needed)).To(gomega.Equal(5))
+}
