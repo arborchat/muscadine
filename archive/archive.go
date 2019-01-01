@@ -53,7 +53,7 @@ func (a *Archive) Needed(n int) []string {
 	if n >= len(needed) {
 		return needed
 	}
-	return needed[len(a.chronological)-n:]
+	return needed[len(needed)-n:]
 }
 
 // Has returns whether the archive contains a message with the given ID.
