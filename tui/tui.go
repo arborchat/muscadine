@@ -332,7 +332,11 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	v.Clear()
 	v.SetCursor(0, 0)
 	v.SetOrigin(0, 0)
-	t.Composer.Reply(t.Editor.ReplyTo.UUID, content[:len(content)-1])
+	// remove a trailing newline, if one exists
+	if content[len(content)-1] == '\n' {
+		content = content[:len(content)-1]
+	}
+	t.Composer.Reply(t.Editor.ReplyTo.UUID, content)
 	return t.historyMode()
 }
 
