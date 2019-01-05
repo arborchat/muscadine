@@ -184,7 +184,7 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 				// ask notificationEngine to display the message
 				notificationEngine(nc, m.ChatMessage)
 			}
-			if !nc.Archive.Has(m.Parent) {
+			if m.Parent != "" && !nc.Archive.Has(m.Parent) {
 				nc.Query(m.Parent)
 			}
 		}
