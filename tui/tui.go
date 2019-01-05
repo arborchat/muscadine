@@ -70,9 +70,11 @@ func (t *TUI) manageConnection(c types.Connection) {
 		for {
 			err := c.Connect()
 			if err != nil {
+				log.Println("Problem connecting to server", err)
 				time.Sleep(time.Second * 5)
 				continue
 			}
+			log.Println("Connected to server")
 			go func() {
 				for i := 0; i < 5; i++ {
 					if root, err := t.histState.Root(); err == nil {
@@ -88,10 +90,12 @@ func (t *TUI) manageConnection(c types.Connection) {
 		t.connected = true
 		t.reRender()
 		<-disconnected
+		log.Println("Disconnected from server")
 		t.connected = false
 		t.reRender()
 		// if we get here, we've been disconnected and will now loop around to a
 		// connection attempt
+		log.Println("Retrying server connection")
 	}
 }
 

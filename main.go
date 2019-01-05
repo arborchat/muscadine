@@ -36,6 +36,7 @@ func configureLogging(logfile string) func() {
 		return func() {}
 	}
 	log.SetOutput(file)
+	log.Println("--- New Session ---")
 	return func() {
 		fmt.Fprintln(os.Stderr, "Logs written to", file.Name())
 		file.Close()
@@ -66,11 +67,13 @@ func main() {
 	}
 	client, err := NewNetClient(flag.Arg(0), username, history)
 	if err != nil {
-		log.Fatal(err)
+		log.Println("Error creating client", err)
+		return
 	}
 	ui, err = tui.NewTUI(client)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Error creating TUI", err)
+		return
 	}
 	ui.AwaitExit()
 	if err := history.Save(); err != nil {
