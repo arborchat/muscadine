@@ -27,7 +27,10 @@ func getDefaultLogFile() string {
 // an error to stdout if it fails. It returns a teardown function that can be used to
 // clean up the logging and print a status message to the user.
 func configureLogging(logfile string) func() {
-	file, err := os.OpenFile(logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+	if err := os.MkdirAll(path.Dir(logfile), 0700); err != nil {
+		log.Printf("Error creating log storage directory (%s): %v\n", path.Dir(logfile), err)
+	}
+	file, err := os.OpenFile(logfile, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0600)
 	if err != nil {
 		log.Printf("Unable to begin logging to %s, %v", logfile, err)
 		return func() {}
