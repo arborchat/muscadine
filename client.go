@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"runtime"
 	"time"
@@ -125,6 +126,7 @@ func (nc *NetClient) send() {
 			err := nc.ReadWriteCloser.Write(protoMessage)
 			if !errored && err != nil {
 				errored = true
+				log.Println("Error writing to server:", err)
 				go nc.Disconnect()
 			} else if errored {
 				continue
@@ -220,10 +222,12 @@ func (nc *NetClient) receive() {
 				// we haven't heard from the server in 30 seconds,
 				// try to interact.
 				nc.pingServer <- struct{}{}
+				log.Println("No server contact in 30 seconds, pinging...")
 			} else if ticks > 1 {
 				// we haven't heard from the server in a minute,
 				// we're probably disconnected.
 				go nc.Disconnect()
+				log.Println("No server contact in 60 seconds, disconnecting")
 			}
 		case readMsg := <-out:
 			// reset our ticker to wait until 30 seconds from when we
@@ -236,6 +240,7 @@ func (nc *NetClient) receive() {
 			err := readMsg.error
 			if !errored && err != nil {
 				errored = true
+				log.Println("Error reading from server:", err)
 				go nc.Disconnect()
 			} else if errored {
 				continue
