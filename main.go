@@ -14,16 +14,13 @@ import (
 )
 
 // getDefaultLogFile returns a path to the default muscadine log file location.
-// Right now, it makes naiive decisions that make the most sense on UNIX systems.
-// It could be improved significantly to incorporate the XDG Base Directory
-// Specification and a more typical path for Windows users.
 func getDefaultLogFile() string {
 	cwdFile := "muscadine.log"
 	u, err := user.Current()
 	if err != nil {
 		return cwdFile
 	}
-	return path.Join(u.HomeDir, ".local", "share", "muscadine", cwdFile)
+	return path.Join(u.HomeDir, UserDataPath, cwdFile)
 }
 
 // configureLogging attempts to set the global logger to use the named file, and logs
