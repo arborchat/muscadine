@@ -27,7 +27,7 @@ func TCPDial(address string) (io.ReadWriteCloser, error) {
 // event handlers and to connect and disconnect from the server. It also embeds
 // the functionality of an Archive and Composer.
 type NetClient struct {
-	*archive.Archive
+	*archive.Manager
 	Composer
 	address string
 	arbor.ReadWriteCloser
@@ -43,7 +43,7 @@ type NetClient struct {
 
 // NewNetClient creates a NetClient configured to communicate with the server at the
 // given address and to use the provided archive to store the history.
-func NewNetClient(address, username string, history *archive.Archive) (*NetClient, error) {
+func NewNetClient(address, username string, history *archive.Manager) (*NetClient, error) {
 	if address == "" {
 		return nil, fmt.Errorf("Illegal address: \"%s\"", address)
 	} else if username == "" {
@@ -56,7 +56,7 @@ func NewNetClient(address, username string, history *archive.Archive) (*NetClien
 	stopReceiving := make(chan struct{})
 	nc := &NetClient{
 		address:       address,
-		Archive:       history,
+		Manager:       history,
 		connectFunc:   TCPDial,
 		Composer:      Composer{username: username, sendChan: composerOut},
 		stopSending:   stopSending,

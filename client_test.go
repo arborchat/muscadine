@@ -20,7 +20,10 @@ func bufConnector(address string) (io.ReadWriteCloser, error) {
 func TestNetClientInvalid(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	address := "localhost:7777"
-	history := archive.New()
+	history, err := archive.NewManager(".")
+	if err != nil {
+		t.Skip(err)
+	}
 	nc, err := NewNetClient(address, "username", nil)
 	g.Expect(nc).To(gomega.BeNil())
 	g.Expect(err).ToNot(gomega.BeNil())
@@ -38,7 +41,10 @@ func TestNetClientInvalid(t *testing.T) {
 func TestNetClient(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	address := "localhost:7777"
-	history := archive.New()
+	history, err := archive.NewManager(".")
+	if err != nil {
+		t.Skip(err)
+	}
 	times := 0
 	timesDisconnected := make(chan int)
 	nc, err := NewNetClient(address, "username", history)

@@ -23,8 +23,13 @@ func main() {
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: " + os.Args[0] + " <ip>:<port>")
 	}
-	history := archive.New()
-	loadHist(history, histfile)
+	history, err := archive.NewManager(histfile)
+	if err != nil {
+		log.Fatalln("unable to construct archive", err)
+	}
+	if err := history.Load(); err != nil {
+		log.Println("error loading history", err)
+	}
 	client, err := NewNetClient(flag.Arg(0), username, history)
 	if err != nil {
 		log.Fatal(err)
@@ -34,5 +39,7 @@ func main() {
 		log.Fatal(err)
 	}
 	ui.AwaitExit()
-	saveHist(history, histfile)
+	if err := history.Save(); err != nil {
+		log.Fatalln("error saving history", err)
+	}
 }
