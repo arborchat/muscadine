@@ -243,6 +243,7 @@ func (t *TUI) queryNeeded(c *gocui.Gui, v *gocui.View) error {
 	for _, n := range needed {
 		t.Query(n)
 	}
+	log.Printf("Manual query for %v\n", needed)
 	return nil
 }
 
