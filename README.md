@@ -20,6 +20,21 @@ This is muscadine's (and arbor's) killer feature. You can actually see the conte
 in. If someone replies to a much earlier message, you can tell that they are doing so. This is a marked improvement
 over the current clutter that can build up during group chat sessions.
 
+You may also notice the `[join]` and `[quit]` messages. Since Arbor does not track online users, Muscadine sends these
+messages to inform the chat of who is connected.
+
+The very first line in the screenshot contains some extra information about the current session:
+
+- Shown in the screenshot
+    - `Selected: Mon Jan 7 14:34:53 EST 2019`: shows the timestamp of the selected message (the red line in the screenshot)
+    - `Connected`: indicates Muscadine is connected to an Arbor server
+    - `all known threads complete`: indicates the entire chat history is loaded by the client
+- Not shown in the screenshot
+    - `Connecting...`: indicates Muscadine is trying to connect to an Arbor server
+    - `3+ broken threads, q to query`: The `3` indicates how many messages are missing their history. `q to query` is a
+    reminder to press q in order to ask the server for missing information. This key usually has no effect since Muscadine
+    automatically queries missing history on startup.
+
 ## What's a Muscadine?
 
 Muscadine is named after [muscadine grapes](https://en.wikipedia.org/wiki/Vitis_rotundifolia), a wild grape native to the
@@ -47,15 +62,15 @@ The keybindings are:
 - History Mode
     - up/down/j/k - scroll the selected message up and down
     - left/right/h/l - scroll the viewport (not the cursor) up and down
-    - enter/i - start a reply to the selected message
-    - r - reply to the earliest known message (the root message)
+    - enter/i/r - start a reply to the selected message
+    - n - reply to the earliest known message (the root message)
     - home/g - jump to top of history
     - end/G - jump to bottom of history
     - q - query the server for any missing chat history (only necessary if top status bar indicates)
 - Compose Mode:
     - enter - send your message (unless in paste mode)
     - ctrl+p - toggle "paste mode", in which the enter key will *not* send the message, but instead type a newline
-    - ctrl+\ - return to history mode
+    - escape - return to history mode
 - Global:
     - ctrl+c - quit
 
