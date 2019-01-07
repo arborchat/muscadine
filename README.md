@@ -23,14 +23,15 @@ over the current clutter that can build up during group chat sessions.
 You may also notice the `[join]` and `[quit]` messages. Since Arbor does not track online users, Muscadine sends these
 messages to inform the chat of who is connected.
 
-The very first line in the screenshot contains some extra information about the current session.
+The very first line in the screenshot contains some extra information about the current session (explained below).
+
 Shown in the screenshot:
 - `Selected: Mon Jan 7 14:34:53 EST 2019`: shows the timestamp of the selected message (the red line in the screenshot)
 - `Connected`: indicates Muscadine is connected to an Arbor server
-- 'all known threads complete`: this indicates the entire chat history is loaded by the client
+- `all known threads complete`: indicates the entire chat history is loaded by the client
 
 Not shown in the screenshot:
-- `Connecting...`: Muscadine is trying to connect to an Arbor server
+- `Connecting...`: indicates Muscadine is trying to connect to an Arbor server
 - `3+ broken threads, q to query`: The `3` indicates how many messages are missing their history. `q to query` is a reminder to press q in order to ask 
 the server for missing information. This key usually has no effect since Muscadine automatically queries missing history on startup.
 
