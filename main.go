@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/user"
 	"path"
+	"strings"
 
 	"github.com/arborchat/muscadine/archive"
 	"github.com/arborchat/muscadine/tui"
@@ -16,6 +17,23 @@ import (
 // getDefaultLogFile returns a path to the default muscadine log file location.
 func getDefaultLogFile() string {
 	cwdFile := "muscadine.log"
+	u, err := user.Current()
+	if err != nil {
+		return cwdFile
+	}
+	return path.Join(u.HomeDir, UserDataPath, cwdFile)
+}
+
+const serverAddressPlaceholder = "<server-address>"
+
+// getDefaultHistFile returns a path to the default muscadine log file location.
+func getDefaultHistFile(serverAddress string) string {
+	return strings.Replace(getDefaultHistFileTemplate(), serverAddressPlaceholder, serverAddress, 1)
+}
+
+// getDefaultHistFileTemplate returns a path to the default muscadine log file location.
+func getDefaultHistFileTemplate() string {
+	cwdFile := serverAddressPlaceholder + ".arborhist"
 	u, err := user.Current()
 	if err != nil {
 		return cwdFile
@@ -49,13 +67,19 @@ func main() {
 		err               error
 		username          string
 		histfile, logfile string
+		histfileTemplate  = getDefaultHistFileTemplate()
 	)
 	flag.StringVar(&username, "username", "muscadine", "Set your username on the server")
-	flag.StringVar(&histfile, "histfile", "", "Load history from this file")
+	flag.StringVar(&histfile, "histfile", histfileTemplate, "Load/Store history in this file")
 	flag.StringVar(&logfile, "logfile", getDefaultLogFile(), "Write logs to this file")
 	flag.Parse()
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: " + os.Args[0] + " <ip>:<port>")
+	}
+	serverAddress := flag.Arg(0)
+	if histfile == histfileTemplate {
+		// use default history file
+		histfile = getDefaultHistFile(serverAddress)
 	}
 	defer configureLogging(logfile)() // defer the returned cleanup function
 	history, err := archive.NewManager(histfile)
@@ -65,7 +89,7 @@ func main() {
 	if err := history.Load(); err != nil {
 		log.Println("error loading history", err)
 	}
-	client, err := NewNetClient(flag.Arg(0), username, history)
+	client, err := NewNetClient(serverAddress, username, history)
 	if err != nil {
 		log.Println("Error creating client", err)
 		return
