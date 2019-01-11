@@ -26,12 +26,13 @@ func getDefaultLogFile() string {
 
 const serverAddressPlaceholder = "<server-address>"
 
-// getDefaultHistFile returns a path to the default muscadine log file location.
+// getDefaultHistFile returns a path to the default muscadine history file
+// location, which is chosen by the address of the server.
 func getDefaultHistFile(serverAddress string) string {
 	return strings.Replace(getDefaultHistFileTemplate(), serverAddressPlaceholder, serverAddress, 1)
 }
 
-// getDefaultHistFileTemplate returns a path to the default muscadine log file location.
+// getDefaultHistFileTemplate returns an example of the default arbor history file location. It contains a placeholder for the server's address.
 func getDefaultHistFileTemplate() string {
 	cwdFile := serverAddressPlaceholder + ".arborhist"
 	u, err := user.Current()
