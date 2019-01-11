@@ -15,11 +15,12 @@ import (
 )
 
 // getDataDir either returns the absolute path to the current user's
-// application data directory or the empty string
+// application data directory or "." (indicating the current working
+// directory on all supported platforms)
 func getDataDir() string {
 	u, err := user.Current()
 	if err != nil {
-		return ""
+		return "."
 	}
 	return path.Join(u.HomeDir, UserDataPath)
 }
