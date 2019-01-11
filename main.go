@@ -14,14 +14,19 @@ import (
 	"github.com/arborchat/muscadine/types"
 )
 
-// getDefaultLogFile returns a path to the default muscadine log file location.
-func getDefaultLogFile() string {
-	cwdFile := "muscadine.log"
+// getDataDir either returns the absolute path to the current user's
+// application data directory or the empty string
+func getDataDir() string {
 	u, err := user.Current()
 	if err != nil {
-		return cwdFile
+		return ""
 	}
-	return path.Join(u.HomeDir, UserDataPath, cwdFile)
+	return path.Join(u.HomeDir, UserDataPath)
+}
+
+// getDefaultLogFile returns a path to the default muscadine log file location.
+func getDefaultLogFile() string {
+	return path.Join(getDataDir(), "muscadine.log")
 }
 
 const serverAddressPlaceholder = "<server-address>"
@@ -34,12 +39,7 @@ func getDefaultHistFile(serverAddress string) string {
 
 // getDefaultHistFileTemplate returns an example of the default arbor history file location. It contains a placeholder for the server's address.
 func getDefaultHistFileTemplate() string {
-	cwdFile := serverAddressPlaceholder + ".arborhist"
-	u, err := user.Current()
-	if err != nil {
-		return cwdFile
-	}
-	return path.Join(u.HomeDir, UserDataPath, cwdFile)
+	return path.Join(getDataDir(), serverAddressPlaceholder+".arborhist")
 }
 
 // configureLogging attempts to set the global logger to use the named file, and logs
