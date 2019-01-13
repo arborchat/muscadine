@@ -6,11 +6,15 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
+	"github.com/arborchat/muscadine/session"
 	"github.com/arborchat/muscadine/types"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 const timeout = 30 * time.Second
@@ -32,7 +36,9 @@ type NetClient struct {
 	Composer
 	address string
 	arbor.ReadWriteCloser
-	connectFunc       Connector
+	connectFunc Connector
+	*session.List
+	session.Session
 	disconnectHandler func(types.Connection)
 	receiveHandler    func(*arbor.ChatMessage)
 	stopSending       chan struct{}
@@ -55,6 +61,11 @@ func NewNetClient(address, username string, history *archive.Manager) (*NetClien
 	composerOut := make(chan *arbor.ProtocolMessage)
 	stopSending := make(chan struct{})
 	stopReceiving := make(chan struct{})
+
+	sessionID, err := uuid.NewV4()
+	if err != nil {
+		return nil, fmt.Errorf("Couldn't generate session id: %s", err)
+	}
 	nc := &NetClient{
 		address:       address,
 		Manager:       history,
@@ -62,6 +73,8 @@ func NewNetClient(address, username string, history *archive.Manager) (*NetClien
 		Composer:      Composer{username: username, sendChan: composerOut},
 		stopSending:   stopSending,
 		stopReceiving: stopReceiving,
+		List:          session.NewList(),
+		Session:       session.Session{ID: sessionID.String()},
 		pingServer:    make(chan struct{}),
 	}
 	return nc, nil
@@ -197,6 +210,39 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 		for _, recent := range m.Recent {
 			if !nc.Has(recent) {
 				nc.Query(recent)
+			}
+		}
+	case arbor.MetaType:
+		for key, value := range m.Meta {
+			switch key {
+			case "presence/who":
+				nc.Composer.AnnouncePresence(nc.Session.ID)
+			case "presence/here":
+				parts := strings.Split(value, ";")
+				if len(parts) < 3 {
+					log.Println("invalid presence/here message:", value)
+					continue
+				}
+				username := parts[0]
+				sessionID := parts[1]
+				timestamp := parts[2]
+				timeInt, err := strconv.Atoi(timestamp)
+				if err != nil {
+					log.Println("Error decoding timestamp in presence/here message:", value)
+					continue
+				}
+				if username == nc.username && sessionID == nc.Session.ID {
+					// don't track our own session
+					continue
+				}
+				err = nc.List.Track(username, session.Session{ID: sessionID, LastSeen: time.Unix(int64(timeInt), 0)})
+				if err != nil {
+					log.Println("Error updating session", err)
+					continue
+				}
+				log.Printf("Tracking session (id=%s) for user %s\n", sessionID, username)
+			default:
+				log.Println("Unknown meta key:", key)
 			}
 		}
 	}

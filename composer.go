@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+	"time"
+
 	arbor "github.com/arborchat/arbor-go"
 )
 
@@ -26,4 +29,14 @@ func (c *Composer) Reply(parent, content string) error {
 // Query sends a query for the message with the given ID.
 func (c *Composer) Query(id string) {
 	c.sendChan <- &arbor.ProtocolMessage{Type: arbor.QueryType, ChatMessage: &arbor.ChatMessage{UUID: id}}
+}
+
+// AnnouncePresence sends a "presence/here" META message.
+func (c *Composer) AnnouncePresence(sessionID string) {
+	c.sendChan <- &arbor.ProtocolMessage{
+		Type: arbor.MetaType,
+		Meta: map[string]string{
+			"presence/here": c.username + ";" + sessionID + ";" + fmt.Sprintf("%d", time.Now().Unix()),
+		},
+	}
 }
