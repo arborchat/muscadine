@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/arborchat/arbor-go"
-  version = "0.1.8"
+  branch = "meta-0.2"
 
 [[constraint]]
   name = "github.com/bbrks/wrap"

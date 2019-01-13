@@ -2,217 +2,128 @@
 
 
 [[projects]]
-  digest = "1:a5a90388171ad62c877b390c08cafe2fa1c311840962cea042e262f8723a545e"
+  branch = "meta-0.2"
   name = "github.com/arborchat/arbor-go"
   packages = ["."]
-  pruneopts = "UT"
-  revision = "df1b4b625322732a2e6da2bac8ddb683808858e3"
-  version = "v0.1.8"
+  revision = "fa039e6f03baff6684fa553d113b237df5276e2f"
 
 [[projects]]
-  digest = "1:18651a61ae4ba9ee396e0a2fb1882b5f69e6a5b52ee3432f4d7718496f7e857d"
   name = "github.com/bbrks/wrap"
   packages = ["."]
-  pruneopts = "UT"
   revision = "e60be0e25cebe43945acf3541683f59e3029c24c"
   version = "v2.3.0"
 
 [[projects]]
   branch = "master"
-  digest = "1:62cb8d96ecc9f9c30f2e4746e4107f498bcbcfb130037c1cc5564408d516b521"
   name = "github.com/gen2brain/beeep"
   packages = ["."]
-  pruneopts = "UT"
   revision = "4e430518395f1fa4d699f30e8d9420218dd311cd"
 
 [[projects]]
-  digest = "1:dae52e85e2f3d0a734799e74ec0711d3ddd673b21a9e83be6c899af64c3a98f6"
   name = "github.com/godbus/dbus"
   packages = ["."]
-  pruneopts = "UT"
-  revision = "66d97aec3384421e393c2a76b770a1b5c31d07a8"
-  version = "v5.0"
+  revision = "2ff6f7ffd60f0f2410b3105864bdd12c7894f844"
+  version = "v5.0.1"
 
 [[projects]]
   branch = "master"
-  digest = "1:f14d1b50e0075fb00177f12a96dd7addf93d1e2883c25befd17285b779549795"
   name = "github.com/gopherjs/gopherjs"
   packages = ["js"]
-  pruneopts = "UT"
   revision = "d547d1d9531ed93dbdebcbff7f83e7c876a1e0ee"
 
 [[projects]]
-  digest = "1:0b226f71747698cd3b03156781c849c3df46e229eef5c3682e182558cf34e8f0"
   name = "github.com/gopherjs/gopherwasm"
   packages = ["js"]
-  pruneopts = "UT"
   revision = "b0e1786f520333e4546f02930c5ca8a929b38841"
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:f2ffb104978341aadea72e33f375d42c5e1954f3f6f489f2950b18a4a494cff3"
   name = "github.com/libp2p/go-buffer-pool"
   packages = ["."]
-  pruneopts = "UT"
   revision = "1d28ab5fdb424e5b3523d357553082e68df9b068"
   version = "v0.1.1"
 
 [[projects]]
-  digest = "1:c5cd39920e0b418c165c04c54717e162db866b5662c3508add7cab5a2c23dd66"
   name = "github.com/libp2p/go-msgio"
   packages = ["."]
-  pruneopts = "UT"
   revision = "031a413e66129d593337a3f5948d9364e7fc6d43"
   version = "v0.0.6"
 
 [[projects]]
-  digest = "1:cdb899c199f907ac9fb50495ec71212c95cb5b0e0a8ee0800da0238036091033"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
-  pruneopts = "UT"
-  revision = "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb"
-  version = "v0.0.3"
+  revision = "3ee7d812e62a0804a7d0a324e0249ca2db3476d3"
+  version = "v0.0.4"
 
 [[projects]]
-  digest = "1:1d3c452788fb76aa238ccb2661533139af2d21d47ff137447adb06f82bd42e8f"
   name = "github.com/multiformats/go-multicodec"
-  packages = [
-    ".",
-    "json",
-  ]
-  pruneopts = "UT"
+  packages = [".","json"]
   revision = "b67bc51f663437753e2028cc4b5fea6192479956"
   version = "v0.1.6"
 
 [[projects]]
   branch = "master"
-  digest = "1:01d9e47830ef6077fb6f91033b0e83f324ad5966d11ed3daa4a5822ace876dab"
   name = "github.com/nsf/termbox-go"
   packages = ["."]
-  pruneopts = "UT"
-  revision = "60ab7e3d12ed91bc1b2486559c4b3a6b62297577"
+  revision = "0938b5187e61bb8c4dcac2b0a9cf4047d83784fc"
 
 [[projects]]
   branch = "master"
-  digest = "1:0e1e5f960c58fdc677212fcc70e55042a0084d367623e51afbdb568963832f5d"
   name = "github.com/nu7hatch/gouuid"
   packages = ["."]
-  pruneopts = "UT"
   revision = "179d4d0c4d8d407a32af483c2354df1d2c91e6c3"
 
 [[projects]]
-  digest = "1:7a137fb7718928e473b7d805434ae563ec41790d3d227cdc64e8b14d1cab8a1f"
   name = "github.com/onsi/gomega"
-  packages = [
-    ".",
-    "format",
-    "internal/assertion",
-    "internal/asyncassertion",
-    "internal/oraclematcher",
-    "internal/testingtsupport",
-    "matchers",
-    "matchers/support/goraph/bipartitegraph",
-    "matchers/support/goraph/edge",
-    "matchers/support/goraph/node",
-    "matchers/support/goraph/util",
-    "types",
-  ]
-  pruneopts = "UT"
+  packages = [".","format","internal/assertion","internal/asyncassertion","internal/oraclematcher","internal/testingtsupport","matchers","matchers/support/goraph/bipartitegraph","matchers/support/goraph/edge","matchers/support/goraph/node","matchers/support/goraph/util","types"]
   revision = "65fb64232476ad9046e57c26cd0bff3d3a8dc6cd"
   version = "v1.4.3"
 
 [[projects]]
-  digest = "1:40e195917a951a8bf867cd05de2a46aaf1806c50cf92eebf4c16f78cd196f747"
   name = "github.com/pkg/errors"
   packages = ["."]
-  pruneopts = "UT"
-  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
-  version = "v0.8.0"
+  revision = "ba968bfe8b2f7e042a574c888954fccecfa385b4"
+  version = "v0.8.1"
 
 [[projects]]
   branch = "flush-fix-paste"
-  digest = "1:235bbcd980b35106712f2382a10f833e1eeb3128ab0b13e3ad20d84cb6e766fe"
   name = "github.com/whereswaldon/gocui"
   packages = ["."]
-  pruneopts = "UT"
   revision = "101990862c62b1156b5f048c02eb2ddf7cdbe1e6"
 
 [[projects]]
   branch = "master"
-  digest = "1:5193d913046443e59093d66a97a40c51f4a5ea4ceba60f3b3ecf89694de5d16f"
   name = "golang.org/x/net"
-  packages = [
-    "html",
-    "html/atom",
-    "html/charset",
-  ]
-  pruneopts = "UT"
-  revision = "351d144fa1fc0bd934e2408202be0c29f25e35a0"
+  packages = ["html","html/atom","html/charset"]
+  revision = "915654e7eabcea33ae277abbecf52f0d8b7a9fdc"
 
 [[projects]]
   branch = "master"
-  digest = "1:ec804b3b6782a7641f394b14ddb3671ce2c9cb4109374dc03ed44db968686dfe"
   name = "golang.org/x/sys"
-  packages = [
-    "windows",
-    "windows/registry",
-  ]
-  pruneopts = "UT"
-  revision = "ec83556a53fe16b65c452a104ea9d1e86a671852"
+  packages = ["windows","windows/registry"]
+  revision = "48ac38b7c8cbedd50b1613c0fccacfc7d88dfcdf"
 
 [[projects]]
-  digest = "1:aa4d6967a3237f8367b6bf91503964a77183ecf696f1273e8ad3551bb4412b5f"
   name = "golang.org/x/text"
-  packages = [
-    "encoding",
-    "encoding/charmap",
-    "encoding/htmlindex",
-    "encoding/internal",
-    "encoding/internal/identifier",
-    "encoding/japanese",
-    "encoding/korean",
-    "encoding/simplifiedchinese",
-    "encoding/traditionalchinese",
-    "encoding/unicode",
-    "internal/gen",
-    "internal/tag",
-    "internal/utf8internal",
-    "language",
-    "runes",
-    "transform",
-    "unicode/cldr",
-  ]
-  pruneopts = "UT"
+  packages = ["encoding","encoding/charmap","encoding/htmlindex","encoding/internal","encoding/internal/identifier","encoding/japanese","encoding/korean","encoding/simplifiedchinese","encoding/traditionalchinese","encoding/unicode","internal/gen","internal/tag","internal/utf8internal","language","runes","transform","unicode/cldr"]
   revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
   version = "v0.3.0"
 
 [[projects]]
   branch = "v1"
-  digest = "1:b71ccd8615521db4ea2f9381f55780a1312654f5d8431d2e58eca51c74110de2"
   name = "gopkg.in/toast.v1"
   packages = ["."]
-  pruneopts = "UT"
   revision = "0a84660828b24d25b35525c9a1f1f51267f8da91"
 
 [[projects]]
-  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  pruneopts = "UT"
   revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
   version = "v2.2.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = [
-    "github.com/arborchat/arbor-go",
-    "github.com/bbrks/wrap",
-    "github.com/gen2brain/beeep",
-    "github.com/mattn/go-runewidth",
-    "github.com/multiformats/go-multicodec/json",
-    "github.com/onsi/gomega",
-    "github.com/whereswaldon/gocui",
-  ]
+  inputs-digest = "e3594f9d703e4870a0041e28dbccf78b199e71b63e3b65b7f097fdd2ddff39dd"
   solver-name = "gps-cdcl"
   solver-version = 1
