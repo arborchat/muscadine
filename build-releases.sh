@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-if [ "$TRAVIS_PR" != "false" ]; then
+if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
     echo "Not building release, this is a pull request"
     exit 0
 fi
