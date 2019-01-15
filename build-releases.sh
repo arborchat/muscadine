@@ -2,9 +2,13 @@
 
 set -euo pipefail
 
-if [ "$TRAVIS_PULL_REQUEST" != "false" ]; then
+if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_BRANCH" != "master" ]; then
     echo "Not building release, this is a pull request"
     exit 0
+fi
+
+if ! command -v hub 2>&1 > /dev/null ; then
+    go get github.com/github/hub
 fi
 
 hub_flags=""
