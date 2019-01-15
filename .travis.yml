@@ -5,3 +5,4 @@ install:
     - dep ensure
 script:
     - go test -v -cover ./...
+    - for os in linux darwin windows openbsd; do echo "building for $os" && env GOOS="$os" go build -o /dev/null; done
