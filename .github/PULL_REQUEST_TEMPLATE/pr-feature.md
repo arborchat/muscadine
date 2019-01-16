@@ -1,6 +1,10 @@
 ---
-title: 'Feature Implementation'
+name: Feature Implementation
+about: Submit a PR with a new feature
+title: ''
 labels: enhancement
+assignees: ''
+
 ---
 
 Implements # .
@@ -11,7 +15,7 @@ Erase all that do not apply:
 - This PR modified keybindings (either changing defaults or adding new actions)
 - This PR modified the visible UI
 
-## Feature explanation
+**Feature explanation**
 
 
 

@@ -1,6 +1,10 @@
 ---
-title: 'Bug Fix'
+name: Bug Fix
+about: Submit a PR to fix a bug
+title: ''
 labels: bug
+assignees: ''
+
 ---
 
 Fixes # .
@@ -11,7 +15,7 @@ Erase all that do not apply:
 - This PR modified keybindings (either changing defaults or adding new actions)
 - This PR modified the visible UI
 
-Changes proposed:
+**Changes proposed**:
 
 - 
 - 
