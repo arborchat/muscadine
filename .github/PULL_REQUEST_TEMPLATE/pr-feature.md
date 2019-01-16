@@ -3,7 +3,7 @@ name: Feature Implementation
 about: Submit a PR with a new feature
 title: ''
 labels: enhancement
-assignees: arborchat/Devs 
+assignees: arborchat/devs 
 
 ---
 

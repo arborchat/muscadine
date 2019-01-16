@@ -3,7 +3,7 @@ name: Bug Fix
 about: Submit a PR to fix a bug
 title: ''
 labels: bug
-assignees: arborchat/Devs
+assignees: arborchat/devs
 
 ---
 
