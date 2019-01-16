@@ -53,7 +53,7 @@ func (a *Archive) Needed(n int) []string {
 	if n >= len(needed) {
 		return needed
 	}
-	return needed[len(a.chronological)-n:]
+	return needed[len(needed)-n:]
 }
 
 // Has returns whether the archive contains a message with the given ID.
@@ -127,15 +127,15 @@ func (a *Archive) Persist(storage io.Writer) error {
 	return encoder.Encode(a.chronological)
 }
 
-// Load reads messages from the io.Reader. It expects those messages to be
+// Populate reads messages from the io.Reader. It expects those messages to be
 // in the format written by Archive.Persist(), and should only be used on
 // io.Readers that were populated with data from a call to Persist(). It
-// is legal to call Load() more than once to load the contents of more than
+// is legal to call Populate() more than once to load the contents of more than
 // one io.Reader into the Archive. This will always be performed nondestructively
 // when possible. Conflicting data (multiple different messages with the same
 // ID) will cause an error. All data from a source containing a conflict will
 // be rejected, so io.Readers loaded first take precedence.
-func (a *Archive) Load(storage io.Reader) error {
+func (a *Archive) Populate(storage io.Reader) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to load from nil")
 	}

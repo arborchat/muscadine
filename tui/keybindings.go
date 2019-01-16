@@ -34,7 +34,7 @@ func (t *TUI) Keybindings() []Binding {
 		{historyView, 'q', gocui.ModNone, t.queryNeeded, "queryNeeded"},
 		{editView, gocui.KeyTab, gocui.ModNone, t.Editor.ActionInsertTab, "InsertTab"},
 		{editView, gocui.KeyEnter, gocui.ModNone, t.handleEnter, "handleEnter"},
-		{editView, gocui.KeyCtrlBackslash, gocui.ModNone, t.cancelReply, "cancelReply"},
+		{editView, gocui.KeyEsc, gocui.ModNone, t.cancelReply, "cancelReply"},
 		{editView, gocui.KeyCtrlP, gocui.ModNone, t.Editor.ActionTogglePasteMode, "TogglePasteMode"},
 	}
 }

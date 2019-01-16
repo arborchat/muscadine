@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"runtime"
 	"time"
@@ -27,7 +28,7 @@ func TCPDial(address string) (io.ReadWriteCloser, error) {
 // event handlers and to connect and disconnect from the server. It also embeds
 // the functionality of an Archive and Composer.
 type NetClient struct {
-	*archive.Archive
+	*archive.Manager
 	Composer
 	address string
 	arbor.ReadWriteCloser
@@ -43,7 +44,7 @@ type NetClient struct {
 
 // NewNetClient creates a NetClient configured to communicate with the server at the
 // given address and to use the provided archive to store the history.
-func NewNetClient(address, username string, history *archive.Archive) (*NetClient, error) {
+func NewNetClient(address, username string, history *archive.Manager) (*NetClient, error) {
 	if address == "" {
 		return nil, fmt.Errorf("Illegal address: \"%s\"", address)
 	} else if username == "" {
@@ -56,7 +57,7 @@ func NewNetClient(address, username string, history *archive.Archive) (*NetClien
 	stopReceiving := make(chan struct{})
 	nc := &NetClient{
 		address:       address,
-		Archive:       history,
+		Manager:       history,
 		connectFunc:   TCPDial,
 		Composer:      Composer{username: username, sendChan: composerOut},
 		stopSending:   stopSending,
@@ -125,6 +126,7 @@ func (nc *NetClient) send() {
 			err := nc.ReadWriteCloser.Write(protoMessage)
 			if !errored && err != nil {
 				errored = true
+				log.Println("Error writing to server:", err)
 				go nc.Disconnect()
 			} else if errored {
 				continue
@@ -184,7 +186,7 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 				// ask notificationEngine to display the message
 				notificationEngine(nc, m.ChatMessage)
 			}
-			if !nc.Archive.Has(m.Parent) {
+			if m.Parent != "" && !nc.Archive.Has(m.Parent) {
 				nc.Query(m.Parent)
 			}
 		}
@@ -220,10 +222,12 @@ func (nc *NetClient) receive() {
 				// we haven't heard from the server in 30 seconds,
 				// try to interact.
 				nc.pingServer <- struct{}{}
+				log.Println("No server contact in 30 seconds, pinging...")
 			} else if ticks > 1 {
 				// we haven't heard from the server in a minute,
 				// we're probably disconnected.
 				go nc.Disconnect()
+				log.Println("No server contact in 60 seconds, disconnecting")
 			}
 		case readMsg := <-out:
 			// reset our ticker to wait until 30 seconds from when we
@@ -236,6 +240,7 @@ func (nc *NetClient) receive() {
 			err := readMsg.error
 			if !errored && err != nil {
 				errored = true
+				log.Println("Error reading from server:", err)
 				go nc.Disconnect()
 			} else if errored {
 				continue

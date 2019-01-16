@@ -37,7 +37,7 @@ func NewTUI(client types.Client) (*TUI, error) {
 	if err != nil {
 		return nil, err
 	}
-	//gui.InputEsc = true
+	gui.InputEsc = true
 	hs, err := NewHistoryState(client)
 	if err != nil {
 		return nil, err
@@ -70,9 +70,11 @@ func (t *TUI) manageConnection(c types.Connection) {
 		for {
 			err := c.Connect()
 			if err != nil {
+				log.Println("Problem connecting to server", err)
 				time.Sleep(time.Second * 5)
 				continue
 			}
+			log.Println("Connected to server")
 			go func() {
 				for i := 0; i < 5; i++ {
 					if root, err := t.histState.Root(); err == nil {
@@ -88,10 +90,12 @@ func (t *TUI) manageConnection(c types.Connection) {
 		t.connected = true
 		t.reRender()
 		<-disconnected
+		log.Println("Disconnected from server")
 		t.connected = false
 		t.reRender()
 		// if we get here, we've been disconnected and will now loop around to a
 		// connection attempt
+		log.Println("Retrying server connection")
 	}
 }
 
@@ -239,6 +243,7 @@ func (t *TUI) queryNeeded(c *gocui.Gui, v *gocui.View) error {
 	for _, n := range needed {
 		t.Query(n)
 	}
+	log.Printf("Manual query for %v\n", needed)
 	return nil
 }
 
@@ -332,7 +337,11 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	v.Clear()
 	v.SetCursor(0, 0)
 	v.SetOrigin(0, 0)
-	t.Composer.Reply(t.Editor.ReplyTo.UUID, content[:len(content)-1])
+	// remove a trailing newline, if one exists
+	if content[len(content)-1] == '\n' {
+		content = content[:len(content)-1]
+	}
+	t.Composer.Reply(t.Editor.ReplyTo.UUID, content)
 	return t.historyMode()
 }
 

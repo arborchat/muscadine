@@ -164,13 +164,13 @@ func TestLast(t *testing.T) {
 	}
 }
 
-// TestLoadPersist ensures that an Archive can load and store messages reliably.
-func TestLoadPersist(t *testing.T) {
+// TestPopulatePersist ensures that an Archive can load and store messages reliably.
+func TestPopulatePersist(t *testing.T) {
 	a := newOrSkip(t)
 	if err := a.Persist(nil); err == nil {
 		t.Error("Archive failed to return error when asked to persist to nil")
 	}
-	if err := a.Load(nil); err == nil {
+	if err := a.Populate(nil); err == nil {
 		t.Error("Archive failed to return error when asked to load to nil")
 	}
 	message := arbor.ChatMessage{
@@ -194,13 +194,13 @@ func TestLoadPersist(t *testing.T) {
 		t.Error("Unable to persist messages to in-memory buffer", err)
 	}
 	a2 := newOrSkip(t)
-	if err := a2.Load(buf); err != nil {
+	if err := a2.Populate(buf); err != nil {
 		t.Error("Unable to load message from in-memory buffer", err)
 	}
 	hist1 := a.Last(10)
 	hist2 := a2.Last(10)
 	if len(hist1) != len(hist2) {
-		t.Error("Loaded and persisted history have different lengths")
+		t.Error("Populateed and persisted history have different lengths")
 	}
 	for i, m1 := range hist1 {
 		if len(hist2) > i && !m1.Equals(hist2[i]) {
@@ -221,11 +221,11 @@ func persistOrSkip(t *testing.T, m *arbor.ChatMessage) io.Reader {
 	return buf
 }
 
-// TestLoadPersistMultiple ensures that an Archive can load messages from
+// TestPopulatePersistMultiple ensures that an Archive can load messages from
 // multiple sources. It checks that the data is unioned together unless
 // there is a conflict (single ID for multiple different messages), in
 // which case it rejects the source that generated the conflict.
-func TestLoadPersistMultiple(t *testing.T) {
+func TestPopulatePersistMultiple(t *testing.T) {
 	message := arbor.ChatMessage{
 		UUID:      "whatever",
 		Parent:    "something",
@@ -247,7 +247,7 @@ func TestLoadPersistMultiple(t *testing.T) {
 	b3 := persistOrSkip(t, &message3)
 	a := newOrSkip(t)
 	for _, buf := range []io.Reader{b1, b2, b3} {
-		if err := a.Load(buf); err != nil {
+		if err := a.Populate(buf); err != nil {
 			t.Error("Error loading from buffer", err)
 		}
 	}
@@ -257,7 +257,7 @@ func TestLoadPersistMultiple(t *testing.T) {
 		}
 	}
 	bBad := persistOrSkip(t, &messageBad)
-	if err := a.Load(bBad); err == nil {
+	if err := a.Populate(bBad); err == nil {
 		t.Error("Failed to generate error when loading buffer with ID conflict")
 	}
 	if a.Get(messageBad.UUID).Content == messageBad.Content {
@@ -326,4 +326,36 @@ func TestNeeded(t *testing.T) {
 			t.Errorf("Should not express the empty string as a needed parent")
 		}
 	}
+}
+
+// TestLongHistNeeded is a regression test that ensures that a very long message history with many unknown
+// parents doesn't crash the client. (github.com/arborchat/muscadine/issues/61)
+func TestLongHistNeeded(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	a := newOrSkip(t)
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	// add lots of messages with known parents
+	for i := 0; i < 100; i++ {
+		message.Parent = message.UUID   // make a child of the previous iteration's message
+		message.UUID += "a"             // ensure new id each iteration
+		added := new(arbor.ChatMessage) // allocate new memory for message so all pointers don't go to same address
+		*added = message
+		addOrSkip(t, a, added)
+	}
+	// add ten messages with unknown parents
+	for i := 0; i < 10; i++ {
+		message.Parent += "b"           // make a child of the previous iteration's message
+		message.UUID += "a"             // ensure new id each iteration
+		added := new(arbor.ChatMessage) // allocate new memory for message so all pointers don't go to same address
+		*added = message
+		addOrSkip(t, a, added)
+	}
+	needed := a.Needed(5)
+	g.Expect(len(needed)).To(gomega.Equal(5))
 }
