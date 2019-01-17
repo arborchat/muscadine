@@ -96,6 +96,9 @@ func main() {
 		log.Println("Error creating client", err)
 		return
 	}
+	// configure notification logic to send desktop notification on all recent messages
+	notifier := &Notifier{ShouldNotify: Recent}
+	client.Notifier = notifier
 	ui, err = tui.NewTUI(client)
 	if err != nil {
 		log.Fatal("Error creating TUI", err)

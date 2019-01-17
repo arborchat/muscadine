@@ -30,7 +30,9 @@ func TCPDial(address string) (io.ReadWriteCloser, error) {
 type NetClient struct {
 	*archive.Manager
 	Composer
+	*Notifier
 	address string
+
 	arbor.ReadWriteCloser
 	connectFunc       Connector
 	disconnectHandler func(types.Connection)
@@ -183,8 +185,8 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 		if !nc.Archive.Has(m.UUID) {
 			if nc.receiveHandler != nil {
 				nc.receiveHandler(m.ChatMessage)
-				// ask notificationEngine to display the message
-				notificationEngine(nc, m.ChatMessage)
+				// ask Notifier to handle the message
+				nc.Notifier.Handle(nc, m.ChatMessage)
 			}
 			if m.Parent != "" && !nc.Archive.Has(m.Parent) {
 				nc.Query(m.Parent)
