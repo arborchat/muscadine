@@ -93,7 +93,7 @@ func TestActiveMultiSessions(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	list := session.NewList()
 	secondName := sessionName + "-second"
-	_ = list.Track(username, session.Session{sessionName, time.Now().Track(-1 * time.Second)})
+	_ = list.Track(username, session.Session{sessionName, time.Now().Add(-1 * time.Second)})
 	_ = list.Track(username, session.Session{secondName, time.Now()})
 	// multiple sessions for the same user should still result in a single result
 	active := list.ActiveSessions()
