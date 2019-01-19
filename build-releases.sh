@@ -31,10 +31,10 @@ readonly bin_name="$project"
 readonly message="Automatic build"
 
 declare -A arch_for_os
-arch_for_os["darwin"]="386 amd64 arm arm64"
-arch_for_os["windows"]="386 amd64"
-arch_for_os["linux"]="386 amd64 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le s390x"
-arch_for_os["openbsd"]="386 amd64 arm"
+arch_for_os["darwin"]="amd64"
+arch_for_os["windows"]="amd64"
+arch_for_os["linux"]="amd64 arm64 ppc64 ppc64le mips64 mips64le s390x"
+arch_for_os["openbsd"]="amd64"
 
 # create the release and upload artifacts
 hub release create $release_flags --message="$message" --commitish="$head_commit" "$tag"
