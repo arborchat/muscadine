@@ -1,4 +1,5 @@
 #!/bin/sh
+#usage: ./build.sh <options for `go build`>
 
 # find the directory containing this script
 script_dir="$(dirname "$(command -v "$0")")"
@@ -24,10 +25,9 @@ echo "package main; const Version = \"$commit$suffix\"" > "$version_file"
 gofmt -s -w "$version_file"
 
 # show the user
-echo "Wrote file $version_file:"
-cat "$version_file"
+echo "Wrote file $version_file"
 
 # ensure dependencies are clean
 dep ensure
 
-go build
+go build "$@"

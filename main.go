@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+
 	"log"
 	"os"
 	"os/user"
@@ -70,11 +71,17 @@ func main() {
 		username          string
 		histfile, logfile string
 		histfileTemplate  = getDefaultHistFileTemplate()
+		version           bool
 	)
 	flag.StringVar(&username, "username", "muscadine", "Set your username on the server")
 	flag.StringVar(&histfile, "histfile", histfileTemplate, "Load/Store history in this file")
 	flag.StringVar(&logfile, "logfile", getDefaultLogFile(), "Write logs to this file")
+	flag.BoolVar(&version, "version", false, "Print version number and exit")
 	flag.Parse()
+	if version {
+		fmt.Printf("Muscadine %s\n", Version)
+		return
+	}
 	if len(flag.Args()) < 1 {
 		log.Fatal("Usage: " + os.Args[0] + " <ip>:<port>")
 	}

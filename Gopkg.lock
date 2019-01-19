@@ -211,6 +211,7 @@
     "github.com/gen2brain/beeep",
     "github.com/mattn/go-runewidth",
     "github.com/multiformats/go-multicodec/json",
+    "github.com/nu7hatch/gouuid",
     "github.com/onsi/gomega",
     "github.com/whereswaldon/gocui",
   ]
