@@ -35,7 +35,7 @@ hub release create $release_flags --message="$message" --commitish="$head_commit
 for os in darwin linux windows openbsd; do
     archive_name="$project-$os.tar.gz"
     echo "Building $project for $os"
-    env GOOS="$os" CGO_ENABLED=0 go build -o "$bin_name" &&\
+    env GOOS="$os" CGO_ENABLED=0 ./build.sh -o "$bin_name" &&\
     tar czf "$archive_name" "$bin_name" &&\
     rm "$bin_name"
     echo "Adding $archive_name to release $tag"
