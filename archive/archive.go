@@ -1,6 +1,7 @@
 package archive
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -126,6 +127,14 @@ func (a *Archive) Persist(storage io.Writer) error {
 	return encoder.Encode(a.chronological)
 }
 
+// OldArchivePrefix is the sequence of bytes that go-multicodec used to
+// indicate JSON-encoded data at the beginning of our history files. That
+// library has been deprecated, and we're switching away from that archive
+// format. For the time being, we have this defined so that we can read old
+// archives correctly. At a future time, this byte sequence and the logic that
+// handles it should be removed.
+var OldArchivePrefix = []byte{0x06, 0x2f, 0x6a, 0x73, 0x6f, 0x6e, 0x0a}
+
 // Populate reads messages from the io.Reader. It expects those messages to be
 // in the format written by Archive.Persist(), and should only be used on
 // io.Readers that were populated with data from a call to Persist(). It
@@ -137,6 +146,21 @@ func (a *Archive) Persist(storage io.Writer) error {
 func (a *Archive) Populate(storage io.Reader) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to load from nil")
+	}
+	// check for old history format
+	prefix := make([]byte, len(OldArchivePrefix))
+	// read the prefix to prevent it from causing a misparse. If it's not there, we'll put the
+	// bytes that we read back.
+	n, err := storage.Read(prefix)
+	if err != nil {
+		return fmt.Errorf("Unable to complete history prefix check: %s", err)
+	}
+	// if the file didn't have the prefix, put the read bytes back
+	if !(n == len(OldArchivePrefix) && bytes.Equal(prefix, OldArchivePrefix)) {
+		prefixBuf := bytes.NewBuffer(prefix)
+		// make a reader that will read like the original reader by returning the bytes that
+		// we already processed first
+		storage = io.MultiReader(prefixBuf, storage)
 	}
 	decoder := json.NewDecoder(storage)
 	if len(a.chronological) < 1 {
