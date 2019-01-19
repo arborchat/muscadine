@@ -41,10 +41,6 @@
   name = "github.com/mattn/go-runewidth"
   version = "0.0.3"
 
-[[constraint]]
-  name = "github.com/multiformats/go-multicodec"
-  version = "0.1.6"
-
 [prune]
   go-tests = true
   unused-packages = true

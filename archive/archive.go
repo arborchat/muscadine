@@ -1,12 +1,12 @@
 package archive
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"sort"
 
 	arbor "github.com/arborchat/arbor-go"
-	"github.com/multiformats/go-multicodec/json"
 )
 
 // Archive stores the chat history of conversations had over Arbor.
@@ -122,8 +122,7 @@ func (a *Archive) Persist(storage io.Writer) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to persist to nil")
 	}
-	mc := mc_json.Multicodec(false)
-	encoder := mc.Encoder(storage)
+	encoder := json.NewEncoder(storage)
 	return encoder.Encode(a.chronological)
 }
 
@@ -139,8 +138,7 @@ func (a *Archive) Populate(storage io.Reader) error {
 	if storage == nil {
 		return fmt.Errorf("Unable to load from nil")
 	}
-	mc := mc_json.Multicodec(false)
-	decoder := mc.Decoder(storage)
+	decoder := json.NewDecoder(storage)
 	if len(a.chronological) < 1 {
 		return decoder.Decode(&a.chronological)
 	}
