@@ -218,7 +218,7 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 			case "presence/who":
 				nc.Composer.AnnouncePresence(nc.Session.ID)
 			case "presence/here":
-				parts := strings.Split(value, ";")
+				parts := strings.Split(value, "\n")
 				if len(parts) < 3 {
 					log.Println("invalid presence/here message:", value)
 					continue

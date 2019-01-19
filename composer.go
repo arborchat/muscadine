@@ -36,7 +36,7 @@ func (c *Composer) AnnouncePresence(sessionID string) {
 	c.sendChan <- &arbor.ProtocolMessage{
 		Type: arbor.MetaType,
 		Meta: map[string]string{
-			"presence/here": c.username + ";" + sessionID + ";" + fmt.Sprintf("%d", time.Now().Unix()),
+			"presence/here": c.username + "\n" + sessionID + "\n" + fmt.Sprintf("%d", time.Now().Unix()),
 		},
 	}
 }
