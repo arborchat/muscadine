@@ -29,10 +29,13 @@ type Client interface {
 type Composer interface {
 	Reply(string, string) error
 	Query(string)
+	AnnounceHere(string)
+	AnnounceLeaving(string)
 }
 
 // Connection models a live connection to a server
 type Connection interface {
+	SessionID() string
 	OnDisconnect(handler func(Connection))
 	OnReceive(handler func(*arbor.ChatMessage))
 	Connect() error

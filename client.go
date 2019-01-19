@@ -148,6 +148,7 @@ func (nc *NetClient) send() {
 			// query for the root message
 			root, _ := nc.Archive.Root()
 			go nc.Composer.Query(root)
+			go nc.Composer.AskWho()
 		case <-nc.stopSending:
 			return
 		}
@@ -213,37 +214,85 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 			}
 		}
 	case arbor.MetaType:
-		for key, value := range m.Meta {
-			switch key {
-			case "presence/who":
-				nc.Composer.AnnouncePresence(nc.Session.ID)
-			case "presence/here":
-				parts := strings.Split(value, "\n")
-				if len(parts) < 3 {
-					log.Println("invalid presence/here message:", value)
-					continue
-				}
-				username := parts[0]
-				sessionID := parts[1]
-				timestamp := parts[2]
-				timeInt, err := strconv.Atoi(timestamp)
-				if err != nil {
-					log.Println("Error decoding timestamp in presence/here message:", value)
-					continue
-				}
-				if username == nc.username && sessionID == nc.Session.ID {
-					// don't track our own session
-					continue
-				}
-				err = nc.List.Track(username, session.Session{ID: sessionID, LastSeen: time.Unix(int64(timeInt), 0)})
-				if err != nil {
-					log.Println("Error updating session", err)
-					continue
-				}
-				log.Printf("Tracking session (id=%s) for user %s\n", sessionID, username)
-			default:
-				log.Println("Unknown meta key:", key)
+		nc.HandleMeta(m.Meta)
+	}
+}
+
+// SessionID returns the unique identifier for this session.
+func (nc *NetClient) SessionID() string {
+	return nc.Session.ID
+}
+
+// parsePresence processes "presence/here" META values into their constituent parts.
+// These values take the form "username\nsessionID\ntimestamp", where username is the user
+// who is advertising their presence, sessionID is the unique identifier for their session,
+// and timestamp is the UNIX epoch time at which they announced their presence.
+func parsePresence(value string) (username, sessionID string, timestamp time.Time, err error) {
+	parts := strings.Split(value, "\n")
+	if len(parts) < 3 {
+		err = fmt.Errorf("invalid presence/here message: %s", value)
+		return
+	}
+	username = parts[0]
+	if username == "" {
+		err = fmt.Errorf("Username cannot be the empty string")
+		return
+	}
+	sessionID = parts[1]
+	if sessionID == "" {
+		err = fmt.Errorf("SessionID cannot be the empty string")
+		return
+	}
+	timeString := parts[2]
+	timeInt, err := strconv.Atoi(timeString)
+	if err != nil {
+		err = fmt.Errorf("Error decoding timestamp in presence/here message: %s", value)
+		return
+	}
+	timestamp = time.Unix(int64(timeInt), 0)
+	return
+}
+
+// HandleMeta implements META message protocol extension handlers.
+func (nc *NetClient) HandleMeta(meta map[string]string) {
+	for key, value := range meta {
+		switch key {
+		case "presence/who":
+			nc.Composer.AnnounceHere(nc.Session.ID)
+		case "presence/here":
+			username, sessionID, timestamp, err := parsePresence(value)
+			if err != nil {
+				log.Println("error parsing presence/here message", err)
+				continue
 			}
+			if username == nc.username && sessionID == nc.Session.ID {
+				// don't track our own session
+				continue
+			}
+			err = nc.List.Track(username, session.Session{ID: sessionID, LastSeen: timestamp})
+			if err != nil {
+				log.Println("Error updating session", err)
+				continue
+			}
+			log.Printf("Tracking session (id=%s) for user %s\n", sessionID, username)
+		case "presence/leave":
+			username, sessionID, _, err := parsePresence(value)
+			if err != nil {
+				log.Println("error parsing presence/leave message", err)
+				continue
+			}
+			if username == nc.username && sessionID == nc.Session.ID {
+				// don't remove our own session
+				continue
+			}
+			err = nc.List.Remove(username, sessionID)
+			if err != nil {
+				log.Println("Error removing session", err)
+				continue
+			}
+			log.Printf("Removed session (id=%s) for user %s\n", sessionID, username)
+		default:
+			log.Println("Unknown meta key:", key)
 		}
 	}
 }
