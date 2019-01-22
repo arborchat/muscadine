@@ -42,7 +42,7 @@ for os in darwin linux windows openbsd; do
     for arch in ${arch_for_os["$os"]}; do
         archive_name="$project-$os-$arch.tar.gz"
         echo "Building $project for $os on $arch"
-        env GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 go build -o "$bin_name" &&\
+        env GOOS="$os" GOARCH="$arch" CGO_ENABLED=0 ./build.sh -o "$bin_name" &&\
         tar czf "$archive_name" "$bin_name" &&\
         rm "$bin_name"
         echo "Adding $archive_name to release $tag"
