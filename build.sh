@@ -12,8 +12,8 @@ suffix=""
 version_file="$(pwd)/version.go"
 
 # check if git is clean. If not, notify user and taint the build
-if ! git diff --exit-code > /dev/null 2>&1 ||\
-   ! git diff --cached --exit-code > /dev/null 2>&1 ; then
+if ! git diff --stat --exit-code ||\
+   ! git diff --stat --cached --exit-code ; then
     suffix="-modified"
     echo "Warning: your current working directory contains unstaged or uncommitted changes.
 Building a \"modified\" binary
