@@ -30,4 +30,8 @@ echo "Wrote file $version_file"
 # ensure dependencies are clean
 dep ensure
 
+# actually perform the build
 go build "$@"
+
+# reset the version.go file so that the git repo doesn't appear modified
+git checkout HEAD -- "$version_file"
