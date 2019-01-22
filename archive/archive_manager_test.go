@@ -221,3 +221,24 @@ func TestOpenFileCreate(t *testing.T) {
 	err = os.Remove(tmpPath)
 	g.Expect(err).To(gomega.BeNil())
 }
+
+// TestOpenFileWrite checks that the OpenFile function returns a writable file.
+func TestOpenFileWrite(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	id, err := uuid.NewV4()
+	if err != nil {
+		t.Skip(err)
+	}
+	idString := id.String()
+	tmpDir := os.TempDir()
+	tmpPath := path.Join(tmpDir, idString, idString)
+	file, err := archive.OpenFile(tmpPath)
+	g.Expect(err).To(gomega.BeNil())
+	g.Expect(file).ToNot(gomega.BeNil())
+	_, err = file.Write([]byte("test"))
+	g.Expect(err).To(gomega.BeNil())
+	err = file.Close()
+	g.Expect(err).To(gomega.BeNil())
+	err = os.Remove(tmpPath)
+	g.Expect(err).To(gomega.BeNil())
+}

@@ -20,10 +20,11 @@ type Opener func(string) (io.ReadWriteCloser, error)
 
 // OpenFile is an Opener that reads a file from disk.
 func OpenFile(histPath string) (io.ReadWriteCloser, error) {
-	file, err := os.Open(histPath)
+	const perms = 0700
+	file, err := os.OpenFile(histPath, os.O_RDWR, perms)
 	if err != nil {
 		if os.IsNotExist(err) {
-			if err := os.MkdirAll(path.Dir(histPath), 0700); err != nil {
+			if err := os.MkdirAll(path.Dir(histPath), perms); err != nil {
 				return nil, err
 			}
 			return os.Create(histPath)
