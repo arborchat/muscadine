@@ -209,6 +209,32 @@ func TestPopulatePersist(t *testing.T) {
 	}
 }
 
+// TestPopulatePersistOld ensures that an Archive can load messages from the old
+// archive format (pre multicodec-go deprecation).
+func TestPopulatePersistOld(t *testing.T) {
+	a := newOrSkip(t)
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	addOrSkip(t, a, &message)
+	buf := new(bytes.Buffer)
+	n, err := buf.Write(archive.OldArchivePrefix)
+	if err != nil || n != len(archive.OldArchivePrefix) {
+		t.Skip("Unable to write prefix into buffer", err)
+	}
+	if err := a.Persist(buf); err != nil {
+		t.Error("Unable to persist messages to in-memory buffer", err)
+	}
+	a2 := newOrSkip(t)
+	if err := a2.Populate(buf); err != nil {
+		t.Error("Loading old archive format failed", err)
+	}
+}
+
 func persistOrSkip(t *testing.T, m *arbor.ChatMessage) io.Reader {
 	a := newOrSkip(t)
 	buf := new(bytes.Buffer)
