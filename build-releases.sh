@@ -2,12 +2,6 @@
 
 set -euo pipefail
 
-# only build on master
-if [ "$TRAVIS_PULL_REQUEST" != "false" ] || [ "$TRAVIS_BRANCH" != "master" ]; then
-    echo "Not building release, this is a pull request"
-    exit 0
-fi
-
 # get hub if we don't have it
 if ! command -v hub > /dev/null 2>&1 ; then
     go get github.com/github/hub
@@ -31,14 +25,14 @@ readonly bin_name="$project"
 readonly message="Automatic build"
 
 declare -A arch_for_os
-arch_for_os["darwin"]="amd64"
-arch_for_os["windows"]="amd64"
-arch_for_os["linux"]="amd64 arm64 ppc64 ppc64le mips64 mips64le s390x"
-arch_for_os["openbsd"]="amd64"
+arch_for_os["darwin"]="386 amd64"
+arch_for_os["windows"]="386 amd64"
+arch_for_os["linux"]="386 amd64 arm arm64 ppc64 ppc64le mips mipsle mips64 mips64le s390x"
+arch_for_os["openbsd"]="386 amd64 arm"
 
 # create the release and upload artifacts
 hub release create $release_flags --message="$message" --commitish="$head_commit" "$tag"
-for os in darwin linux windows openbsd; do
+for os in "${!arch_for_os[@]}" ; do
     for arch in ${arch_for_os["$os"]}; do
         archive_name="$project-$os-$arch.tar.gz"
         echo "Building $project for $os on $arch"
