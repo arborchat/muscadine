@@ -43,10 +43,15 @@ these grape vines are a climbing plant that is often supported by an arbor.
 
 ## Install
 
-To get a copy, make sure you have Go installed. Then run:
+The best way to install Muscadine is to head over to our [Releases](https://github.com/arborchat/muscadine/releases) page and pick up the latest build for your operating system.
+
+## Build
+
+If you'd like to build Muscadine, make sure you have [Go](https://golang.org/) and [dep](https://github.com/golang/dep) installed. Clone this repository, then run:
 
 ```
-go get -u github.com/arborchat/muscadine
+cd muscadine
+./build.sh
 ```
 
 ## Use

@@ -2,12 +2,12 @@
 
 
 [[projects]]
-  digest = "1:a5a90388171ad62c877b390c08cafe2fa1c311840962cea042e262f8723a545e"
+  digest = "1:5dcb46c686b732073ffc62d4063d4b8ad3a83a36d6d012cd14ac1d9dc0ffe879"
   name = "github.com/arborchat/arbor-go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "df1b4b625322732a2e6da2bac8ddb683808858e3"
-  version = "v0.1.8"
+  revision = "29d47f5e0a16373b2055a3c8c7ef0a8a0e370f76"
+  version = "v0.2.0"
 
 [[projects]]
   digest = "1:18651a61ae4ba9ee396e0a2fb1882b5f69e6a5b52ee3432f4d7718496f7e857d"
@@ -50,39 +50,12 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:f2ffb104978341aadea72e33f375d42c5e1954f3f6f489f2950b18a4a494cff3"
-  name = "github.com/libp2p/go-buffer-pool"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "1d28ab5fdb424e5b3523d357553082e68df9b068"
-  version = "v0.1.1"
-
-[[projects]]
-  digest = "1:c5cd39920e0b418c165c04c54717e162db866b5662c3508add7cab5a2c23dd66"
-  name = "github.com/libp2p/go-msgio"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "031a413e66129d593337a3f5948d9364e7fc6d43"
-  version = "v0.0.6"
-
-[[projects]]
   digest = "1:cdb899c199f907ac9fb50495ec71212c95cb5b0e0a8ee0800da0238036091033"
   name = "github.com/mattn/go-runewidth"
   packages = ["."]
   pruneopts = "UT"
   revision = "ce7b0b5c7b45a81508558cd1dba6bb1e4ddb51bb"
   version = "v0.0.3"
-
-[[projects]]
-  digest = "1:1d3c452788fb76aa238ccb2661533139af2d21d47ff137447adb06f82bd42e8f"
-  name = "github.com/multiformats/go-multicodec"
-  packages = [
-    ".",
-    "json",
-  ]
-  pruneopts = "UT"
-  revision = "b67bc51f663437753e2028cc4b5fea6192479956"
-  version = "v0.1.6"
 
 [[projects]]
   branch = "master"
@@ -210,7 +183,7 @@
     "github.com/bbrks/wrap",
     "github.com/gen2brain/beeep",
     "github.com/mattn/go-runewidth",
-    "github.com/multiformats/go-multicodec/json",
+    "github.com/nu7hatch/gouuid",
     "github.com/onsi/gomega",
     "github.com/whereswaldon/gocui",
   ]
