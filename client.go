@@ -6,11 +6,15 @@ import (
 	"log"
 	"net"
 	"runtime"
+	"strconv"
+	"strings"
 	"time"
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/archive"
+	"github.com/arborchat/muscadine/session"
 	"github.com/arborchat/muscadine/types"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 const timeout = 30 * time.Second
@@ -34,7 +38,9 @@ type NetClient struct {
 	address string
 
 	arbor.ReadWriteCloser
-	connectFunc       Connector
+	connectFunc Connector
+	*session.List
+	session.Session
 	disconnectHandler func(types.Connection)
 	receiveHandler    func(*arbor.ChatMessage)
 	stopSending       chan struct{}
@@ -57,6 +63,11 @@ func NewNetClient(address, username string, history *archive.Manager) (*NetClien
 	composerOut := make(chan *arbor.ProtocolMessage)
 	stopSending := make(chan struct{})
 	stopReceiving := make(chan struct{})
+
+	sessionID, err := uuid.NewV4()
+	if err != nil {
+		return nil, fmt.Errorf("Couldn't generate session id: %s", err)
+	}
 	nc := &NetClient{
 		address:       address,
 		Manager:       history,
@@ -64,6 +75,8 @@ func NewNetClient(address, username string, history *archive.Manager) (*NetClien
 		Composer:      Composer{username: username, sendChan: composerOut},
 		stopSending:   stopSending,
 		stopReceiving: stopReceiving,
+		List:          session.NewList(),
+		Session:       session.Session{ID: sessionID.String()},
 		pingServer:    make(chan struct{}),
 	}
 	return nc, nil
@@ -137,6 +150,7 @@ func (nc *NetClient) send() {
 			// query for the root message
 			root, _ := nc.Archive.Root()
 			go nc.Composer.Query(root)
+			go nc.Composer.AskWho()
 		case <-nc.stopSending:
 			return
 		}
@@ -200,6 +214,87 @@ func (nc *NetClient) handleMessage(m *arbor.ProtocolMessage) {
 			if !nc.Has(recent) {
 				nc.Query(recent)
 			}
+		}
+	case arbor.MetaType:
+		nc.HandleMeta(m.Meta)
+	}
+}
+
+// SessionID returns the unique identifier for this session.
+func (nc *NetClient) SessionID() string {
+	return nc.Session.ID
+}
+
+// parsePresence processes "presence/here" META values into their constituent parts.
+// These values take the form "username\nsessionID\ntimestamp", where username is the user
+// who is advertising their presence, sessionID is the unique identifier for their session,
+// and timestamp is the UNIX epoch time at which they announced their presence.
+func parsePresence(value string) (username, sessionID string, timestamp time.Time, err error) {
+	parts := strings.Split(value, "\n")
+	if len(parts) < 3 {
+		err = fmt.Errorf("invalid presence/here message: %s", value)
+		return
+	}
+	username = parts[0]
+	if username == "" {
+		err = fmt.Errorf("Username cannot be the empty string")
+		return
+	}
+	sessionID = parts[1]
+	if sessionID == "" {
+		err = fmt.Errorf("SessionID cannot be the empty string")
+		return
+	}
+	timeString := parts[2]
+	timeInt, err := strconv.Atoi(timeString)
+	if err != nil {
+		err = fmt.Errorf("Error decoding timestamp in presence/here message: %s", value)
+		return
+	}
+	timestamp = time.Unix(int64(timeInt), 0)
+	return
+}
+
+// HandleMeta implements META message protocol extension handlers.
+func (nc *NetClient) HandleMeta(meta map[string]string) {
+	for key, value := range meta {
+		switch key {
+		case "presence/who":
+			nc.Composer.AnnounceHere(nc.Session.ID)
+		case "presence/here":
+			username, sessionID, timestamp, err := parsePresence(value)
+			if err != nil {
+				log.Println("error parsing presence/here message", err)
+				continue
+			}
+			if username == nc.username && sessionID == nc.Session.ID {
+				// don't track our own session
+				continue
+			}
+			err = nc.List.Track(username, session.Session{ID: sessionID, LastSeen: timestamp})
+			if err != nil {
+				log.Println("Error updating session", err)
+				continue
+			}
+			log.Printf("Tracking session (id=%s) for user %s\n", sessionID, username)
+		case "presence/leave":
+			username, sessionID, _, err := parsePresence(value)
+			if err != nil {
+				log.Println("error parsing presence/leave message", err)
+				continue
+			}
+			if username == nc.username && sessionID == nc.Session.ID {
+				// don't remove our own session
+				continue
+			}
+			err = nc.List.Remove(username, sessionID)
+			if err != nil {
+				log.Println("Error removing session", err)
+				continue
+			}
+			log.Printf("Removed session (id=%s) for user %s\n", sessionID, username)
+		default:
+			log.Println("Unknown meta key:", key)
 		}
 	}
 }

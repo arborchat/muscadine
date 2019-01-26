@@ -24,10 +24,10 @@ func NewList() *List {
 	return &List{make(map[string]map[string]time.Time)}
 }
 
-// Add updates the List with the given session information for the given
+// Track updates the List with the given session information for the given
 // user. If the user has a session with the same ID already, the LastSeen
 // time is updated to reflect the LastSeen time in sess.
-func (l *List) Add(username string, sess Session) error {
+func (l *List) Track(username string, sess Session) error {
 	if username == "" || sess.ID == "" {
 		return fmt.Errorf("Invalid username (%s) or session ID (%s)", username, sess.ID)
 	}
