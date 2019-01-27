@@ -1,6 +1,7 @@
 #!/bin/bash
 #usage: ./build.sh <options for `go build`>
 
+# use bash strict mode
 set -euo pipefail
 
 # find the directory containing this script
