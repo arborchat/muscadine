@@ -385,3 +385,42 @@ func TestLongHistNeeded(t *testing.T) {
 	needed := a.Needed(5)
 	g.Expect(len(needed)).To(gomega.Equal(5))
 }
+
+// TestChildrenOf checks that the ChildrenOf method returns all known children of the message with the provided ID
+func TestChildrenOf(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	a := newOrSkip(t)
+	children := a.ChildrenOf("")
+	g.Expect(children).ToNot(gomega.BeNil())
+	g.Expect(children).To(gomega.BeEmpty())
+	message := arbor.ChatMessage{
+		UUID:      "whatever",
+		Parent:    "something",
+		Content:   "a lame test",
+		Timestamp: 500000,
+		Username:  "Socrates",
+	}
+	message2 := message
+	message2.Parent = message.UUID
+	message2.UUID = "another"
+	addOrSkip(t, a, &message)
+
+	// asking for an unknown message ID should also yield an empty slice, even if a child is known
+	children = a.ChildrenOf(message.Parent)
+	g.Expect(children).ToNot(gomega.BeNil())
+	g.Expect(children).To(gomega.BeEmpty())
+
+	// this message has one child
+	addOrSkip(t, a, &message2)
+	children = a.ChildrenOf(message.UUID)
+	g.Expect(children).ToNot(gomega.BeNil())
+	g.Expect(children).To(gomega.BeEquivalentTo([]string{message2.UUID}))
+
+	// now it has two
+	message3 := message2
+	message3.UUID = "third"
+	addOrSkip(t, a, &message3)
+	children = a.ChildrenOf(message.UUID)
+	g.Expect(children).ToNot(gomega.BeNil())
+	g.Expect(children).To(gomega.BeEquivalentTo([]string{message2.UUID, message3.UUID}))
+}

@@ -14,6 +14,7 @@ import (
 // It provides mechanisms to persist history to and load history from disk.
 type Archive struct {
 	chronological []*arbor.ChatMessage
+	childCache    map[string][]string
 	root          string
 }
 
@@ -21,7 +22,10 @@ const defaultCapacity = 1024
 
 // New creates an empty archive. Use Load() or Add() to populate with data.
 func New() *Archive {
-	return &Archive{chronological: make([]*arbor.ChatMessage, 0, defaultCapacity)}
+	return &Archive{
+		chronological: make([]*arbor.ChatMessage, 0, defaultCapacity),
+		childCache:    make(map[string][]string),
+	}
 }
 
 // Last returns the most chronologically "recent" `n` messages known to the
@@ -102,6 +106,10 @@ func (a *Archive) Add(message *arbor.ChatMessage) error {
 	if a.root == "" && message.Parent == "" {
 		a.root = message.UUID
 	}
+	// update the child cache of this message's parent if it is in the cache
+	if children, inCache := a.childCache[message.Parent]; inCache {
+		a.childCache[message.Parent] = append(children, message.UUID)
+	}
 	return nil
 }
 
@@ -114,6 +122,33 @@ func (a *Archive) Root() (string, error) {
 		return a.chronological[0].UUID, nil
 	}
 	return "", fmt.Errorf("No known messages")
+}
+
+func dupSlice(in []string) []string {
+	out := make([]string, len(in))
+	copy(out, in)
+	return out
+}
+
+// ChildrenOf returns the direct child elements of the message tree for the post with the given id.
+// If there is no known post with the provided id or if the provided post has no children,
+// an empty slice is returned.
+func (a *Archive) ChildrenOf(id string) []string {
+	if !a.Has(id) {
+		return []string{}
+	}
+	children, inCache := a.childCache[id]
+	if inCache {
+		return dupSlice(children)
+	}
+	children = []string{}
+	for _, m := range a.chronological {
+		if m.Parent == id {
+			children = append(children, m.UUID)
+		}
+	}
+	a.childCache[id] = children
+	return dupSlice(children)
 }
 
 // Persist stores the contents of the archive into the provided io.Writer.
