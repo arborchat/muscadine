@@ -21,7 +21,7 @@ type TUI struct {
 	*gocui.Gui
 	done     chan struct{}
 	messages chan *arbor.ChatMessage
-	types.Composer
+	types.Client
 	*Editor
 	histState      *HistoryState
 	init           sync.Once
@@ -47,7 +47,7 @@ func NewTUI(client types.Client) (*TUI, error) {
 		Gui:       gui,
 		messages:  make(chan *arbor.ChatMessage),
 		histState: hs,
-		Composer:  client,
+		Client:    client,
 		Editor:    NewEditor(),
 	}
 	client.OnReceive(t.Display)
@@ -76,9 +76,10 @@ func (t *TUI) manageConnection(c types.Connection) {
 			}
 			log.Println("Connected to server")
 			go func() {
+				t.Client.AnnounceHere(t.SessionID())
 				for i := 0; i < 5; i++ {
 					if root, err := t.histState.Root(); err == nil {
-						t.Composer.Reply(root, "[join]")
+						t.Client.Reply(root, "[join]")
 						return
 					}
 					time.Sleep(5 * time.Second)
@@ -157,10 +158,11 @@ func (t *TUI) Display(message *arbor.ChatMessage) {
 // quit asks the TUI to stop running. Should only be called as
 // a keystroke or mouse input handler.
 func (t *TUI) quit(c *gocui.Gui, v *gocui.View) error {
+	t.Client.AnnounceLeaving(t.SessionID())
 	if root, err := t.histState.Root(); err != nil {
 		log.Println("Not notifying that we quit:", err)
 	} else {
-		t.Composer.Reply(root, "[quit]")
+		t.Client.Reply(root, "[quit]")
 		time.Sleep(time.Millisecond * 250) // wait in the hope that Quit will be sent
 	}
 	return gocui.ErrQuit
@@ -341,7 +343,7 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	if content[len(content)-1] == '\n' {
 		content = content[:len(content)-1]
 	}
-	t.Composer.Reply(t.Editor.ReplyTo.UUID, content)
+	t.Client.Reply(t.Editor.ReplyTo.UUID, content)
 	return t.historyMode()
 }
 

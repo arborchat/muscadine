@@ -7,14 +7,29 @@ import (
 	"github.com/gen2brain/beeep"
 )
 
-// This method makes notifications and handles all notification logic
-func notificationEngine(cli *NetClient, msg *arbor.ChatMessage) {
+// Notifier manages sending notifications about new messages
+type Notifier struct {
+	// a function to decide whether to send notifications
+	ShouldNotify func(*NetClient, *arbor.ChatMessage) bool
+}
+
+// Handle processes a message and sends any notifications based on the
+// current notification policy.
+func (n *Notifier) Handle(cli *NetClient, msg *arbor.ChatMessage) {
+	if n.ShouldNotify(cli, msg) {
+		beeep.Notify("Muscadine", msg.Username+": "+msg.Content, "")
+	}
+}
+
+// Recent sends a notification for every incoming message within the recent
+// past that wasn't authored by the current user.
+func Recent(cli *NetClient, msg *arbor.ChatMessage) bool {
 	// is the message new?
 	if msg.Timestamp > (time.Now().Unix() - int64(5)) {
 		// do not reply to self
 		if cli.username != msg.Username {
-			toSend := msg.Username + ": " + msg.Content
-			beeep.Notify("Muscadine", toSend, "")
+			return true
 		}
 	}
+	return false
 }
