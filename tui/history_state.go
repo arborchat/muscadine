@@ -39,9 +39,9 @@ const (
 	// AncestorColor is the ANSI escape sequence for the color that is used to highlight
 	// the ancestors of the currently-selected message
 	AncestorColor = yellow
-	// DescendentColor is the ANSI escape sequence for the color that is used to highlight
-	// the descendents of the currently-selected message
-	DescendentColor = green
+	// DescendantColor is the ANSI escape sequence for the color that is used to highlight
+	// the descendants of the currently-selected message
+	DescendantColor = green
 	// ClearColor is the ANSI escape sequence to return to the default color
 	ClearColor = "\x1b[0;0m"
 )
@@ -140,19 +140,19 @@ func (h *HistoryState) currentAncestors() []string {
 	return ancestors
 }
 
-// currentDescendents returns all known descendents of the HistoryState's currently-selected
+// currentDescendants returns all known descendants of the HistoryState's currently-selected
 // message.
-func (h *HistoryState) currentDescendents() []string {
-	descendents := make([]string, 0)
+func (h *HistoryState) currentDescendants() []string {
+	descendants := make([]string, 0)
 	if len(h.History) < 2 {
-		return descendents
+		return descendants
 	}
 	currentID := h.History[h.currentIndex].UUID
-	descendents = append(descendents, h.Archive.ChildrenOf(currentID)...)
-	for i := 0; i < len(descendents); i++ {
-		descendents = append(descendents, h.Archive.ChildrenOf(descendents[i])...)
+	descendants = append(descendants, h.Archive.ChildrenOf(currentID)...)
+	for i := 0; i < len(descendants); i++ {
+		descendants = append(descendants, h.Archive.ChildrenOf(descendants[i])...)
 	}
-	return descendents
+	return descendants
 }
 
 // Render writes the correct contents of the history to the provided
@@ -164,7 +164,7 @@ func (h *HistoryState) Render(target io.Writer) error {
 	renderableHist := h.History
 	renderedHistLines := make([][]byte, 0, h.renderHeight) // ensure starting len is zero
 	ancestors := h.currentAncestors()
-	descendents := h.currentDescendents()
+	descendants := h.currentDescendants()
 	var (
 		colorPre, colorPost string
 	)
@@ -184,12 +184,12 @@ func (h *HistoryState) Render(target io.Writer) error {
 					break ancestorColorize
 				}
 			}
-		descendentColorize:
-			for _, id := range descendents {
+		descendantColorize:
+			for _, id := range descendants {
 				if id == message.UUID {
-					colorPre = DescendentColor
+					colorPre = DescendantColor
 					colorPost = ClearColor
-					break descendentColorize
+					break descendantColorize
 				}
 			}
 		}
