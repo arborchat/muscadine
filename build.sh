@@ -1,5 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 #usage: ./build.sh <options for `go build`>
+
+set -euo pipefail
 
 # find the directory containing this script
 script_dir="$(dirname "$(command -v "$0")")"
