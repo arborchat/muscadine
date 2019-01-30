@@ -49,6 +49,7 @@ type Archive interface {
 	Has(id string) bool
 	Get(id string) *arbor.ChatMessage
 	Root() (string, error)
+	ChildrenOf(string) []string
 	Add(message *arbor.ChatMessage) error
 	Persist(storage io.Writer) error
 	Populate(storage io.Reader) error
