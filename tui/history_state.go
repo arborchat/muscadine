@@ -31,13 +31,17 @@ const (
 	defaultHistoryCapacity = 1000
 	defaultHistoryLength   = 0
 	red                    = "\x1b[0;31m"
+	green                  = "\x1b[0;32m"
 	yellow                 = "\x1b[0;33m"
 	// CurrentColor is the ANSI escape sequence for the color that is used to highlight
 	// the currently-selected message
 	CurrentColor = red
-	// AncestorColor is the ANSI escape sequence for the color that is use to highlight
+	// AncestorColor is the ANSI escape sequence for the color that is used to highlight
 	// the ancestors of the currently-selected message
 	AncestorColor = yellow
+	// DescendantColor is the ANSI escape sequence for the color that is used to highlight
+	// the descendants of the currently-selected message
+	DescendantColor = green
 	// ClearColor is the ANSI escape sequence to return to the default color
 	ClearColor = "\x1b[0;0m"
 )
@@ -136,6 +140,21 @@ func (h *HistoryState) currentAncestors() []string {
 	return ancestors
 }
 
+// currentDescendants returns all known descendants of the HistoryState's currently-selected
+// message.
+func (h *HistoryState) currentDescendants() []string {
+	descendants := make([]string, 0)
+	if len(h.History) < 2 {
+		return descendants
+	}
+	currentID := h.History[h.currentIndex].UUID
+	descendants = append(descendants, h.Archive.ChildrenOf(currentID)...)
+	for i := 0; i < len(descendants); i++ {
+		descendants = append(descendants, h.Archive.ChildrenOf(descendants[i])...)
+	}
+	return descendants
+}
+
 // Render writes the correct contents of the history to the provided
 // writer. Each time it is invoked, it will render the entire history, so the
 // writer should be empty when it is invoked.
@@ -145,6 +164,7 @@ func (h *HistoryState) Render(target io.Writer) error {
 	renderableHist := h.History
 	renderedHistLines := make([][]byte, 0, h.renderHeight) // ensure starting len is zero
 	ancestors := h.currentAncestors()
+	descendants := h.currentDescendants()
 	var (
 		colorPre, colorPost string
 	)
@@ -156,12 +176,20 @@ func (h *HistoryState) Render(target io.Writer) error {
 		} else {
 			colorPre = ""
 			colorPost = ""
-		colorize:
+		ancestorColorize:
 			for _, id := range ancestors {
 				if id == message.UUID {
 					colorPre = AncestorColor
 					colorPost = ClearColor
-					break colorize
+					break ancestorColorize
+				}
+			}
+		descendantColorize:
+			for _, id := range descendants {
+				if id == message.UUID {
+					colorPre = DescendantColor
+					colorPost = ClearColor
+					break descendantColorize
 				}
 			}
 		}
