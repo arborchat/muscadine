@@ -67,7 +67,10 @@ func (l *List) Remove(username, sessID string) error {
 		if exists {
 			// delete the session if we found it
 			delete(userSessions, sessID)
-			// TODO: delete the whole map for the user if this was their only session
+			// delete the whole map for the user if this was their only session
+			if len(l.Active[username]) == 0 {
+				delete(l.Active, username)
+			}
 			return nil
 		}
 		// we were asked to delete a nonexistent session
