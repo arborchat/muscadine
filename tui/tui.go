@@ -17,6 +17,7 @@ const editView = "edit"
 const globalView = ""
 const userListView = "userlist"
 const histViewTitlePrefix = "Chat History"
+const updateInterval = 1 * time.Second
 
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
@@ -130,17 +131,21 @@ func (t *TUI) AwaitExit() {
 
 // update listens for new messages to display and redraws the screen.
 func (t *TUI) update() {
-	for message := range t.messages {
-		// can't do this inside the loop or it will bind the wrong value of
-		// `message` and will be prone to race conditions on whether the
-		// `New()` method is invoked before the value of `message` is
-		// reassigned.
-		err := t.histState.New(message)
-		if err != nil {
-			log.Println(err)
+	ticker := time.NewTicker(updateInterval)
+	for {
+		select {
+		case message := <-t.messages:
+			err := t.histState.New(message)
+			if err != nil {
+				log.Println(err)
+			}
+			t.reRender()
+		case <-ticker.C:
+			// redraw
+			t.Update(func(*gocui.Gui) error { return nil })
+		case <-t.done:
+			return
 		}
-
-		t.reRender()
 	}
 }
 
