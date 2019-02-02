@@ -36,6 +36,7 @@ type SessionList interface {
 type Composer interface {
 	Reply(string, string) error
 	Query(string)
+	AskWho()
 	AnnounceHere(string)
 	AnnounceLeaving(string)
 }

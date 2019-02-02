@@ -80,6 +80,7 @@ func (t *TUI) manageConnection(c types.Connection) {
 			log.Println("Connected to server")
 			go func() {
 				t.Client.AnnounceHere(t.SessionID())
+				t.Client.AskWho()
 			}()
 			break
 		}
