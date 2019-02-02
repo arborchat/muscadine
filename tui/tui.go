@@ -384,7 +384,8 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 	sessions := t.Client.ActiveSessions()
 	userText := ""
 	for user, lastSeen := range sessions {
-		userText += user + " seen " + time.Since(lastSeen).String() + " ago"
+		since := time.Since(lastSeen)
+		userText += fmt.Sprintf("%s seen %02dm%02ds ago\n", user, int(since.Minutes()), int(since.Seconds()))
 	}
 	userList.Clear()
 	_, err = userList.Write([]byte(userText))
