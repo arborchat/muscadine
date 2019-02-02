@@ -128,3 +128,16 @@ func TestActiveMultiUserSessions(t *testing.T) {
 	g.Expect(usernames).To(gomega.ContainElement(username))
 	g.Expect(usernames).To(gomega.ContainElement(secondUser))
 }
+
+// TestActiveSessionsEmpty ensures that ActiveSessions behaves correctly
+// when there are no known sessions
+func TestActiveSessionsEmpty(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	list := session.NewList()
+	sessions := list.ActiveSessions()
+	g.Expect(sessions).To(gomega.BeEmpty())
+	list.Track("foo", session.Session{"bar", time.Now()})
+	list.Remove("foo", "bar")
+	sessions = list.ActiveSessions()
+	g.Expect(sessions).To(gomega.BeEmpty())
+}
