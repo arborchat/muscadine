@@ -8,12 +8,14 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/types"
+	"github.com/pkg/errors"
 	"github.com/whereswaldon/gocui"
 )
 
 const historyView = "history"
 const editView = "edit"
 const globalView = ""
+const userListView = "userlist"
 const histViewTitlePrefix = "Chat History"
 
 // TUI is the default terminal user interface implementation for this client
@@ -333,6 +335,24 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	return t.historyMode()
 }
 
+// toggleUserList toggles the visibility of the list of online users
+func (t *TUI) toggleUserList(c *gocui.Gui, v *gocui.View) error {
+	x, y, _, _, err := c.ViewPosition(userListView)
+	if err != nil {
+		return errors.Wrapf(err, "toggleUserList view position")
+	}
+	topView, err := c.ViewByPosition(x+1, y+1)
+	if err != nil {
+		return errors.Wrapf(err, "toggleUserList view by position")
+	}
+	if topView.Name() == userListView {
+		_, err = c.SetViewOnBottom(userListView)
+		return errors.Wrapf(err, "toggleUserList set on bottom")
+	}
+	_, err = c.SetViewOnTop(userListView)
+	return errors.Wrapf(err, "toggleUserList set on top")
+}
+
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
@@ -344,6 +364,28 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		t.reRender()
 	}
 	t.lastKnownWidth = mX
+	// create a hidden-by-default user list view
+	userList, err := gui.SetView(userListView, 0, 0, histMaxX, (histMaxY/2)+1)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		userList.Title = "Online users"
+		userList.Wrap = true
+		gui.SetViewOnBottom(userListView)
+		log.Printf("%v", userList)
+	}
+	// repopulate the user list
+	sessions := t.Client.ActiveSessions()
+	userText := ""
+	for user, lastSeen := range sessions {
+		userText += user + " seen " + time.Since(lastSeen).String() + " ago"
+	}
+	userList.Clear()
+	_, err = userList.Write([]byte(userText))
+	if err != nil {
+		log.Println("error writing user list", err)
+	}
 	// update view dimensions or create for the first time
 	histView, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
 	if err != nil {

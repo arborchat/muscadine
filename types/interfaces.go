@@ -24,6 +24,7 @@ type Client interface {
 	Composer
 	Archive
 	Connection
+	SessionList
 }
 
 // SessionList tracks the sessions of other users.
