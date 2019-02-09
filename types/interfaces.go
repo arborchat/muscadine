@@ -7,6 +7,7 @@ package types
 
 import (
 	"io"
+	"time"
 
 	arbor "github.com/arborchat/arbor-go"
 )
@@ -23,12 +24,19 @@ type Client interface {
 	Composer
 	Archive
 	Connection
+	SessionList
+}
+
+// SessionList tracks the sessions of other users.
+type SessionList interface {
+	ActiveSessions() map[string]time.Time
 }
 
 // Composer writes and sends protocol messages
 type Composer interface {
 	Reply(string, string) error
 	Query(string)
+	AskWho()
 	AnnounceHere(string)
 	AnnounceLeaving(string)
 }
