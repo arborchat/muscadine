@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# use bash strict mode
 set -euo pipefail
 
 # only build on master
