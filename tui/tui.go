@@ -8,13 +8,16 @@ import (
 
 	arbor "github.com/arborchat/arbor-go"
 	"github.com/arborchat/muscadine/types"
+	"github.com/pkg/errors"
 	"github.com/whereswaldon/gocui"
 )
 
 const historyView = "history"
 const editView = "edit"
 const globalView = ""
+const userListView = "userlist"
 const histViewTitlePrefix = "Chat History"
+const updateInterval = 1 * time.Second
 
 // TUI is the default terminal user interface implementation for this client
 type TUI struct {
@@ -77,14 +80,7 @@ func (t *TUI) manageConnection(c types.Connection) {
 			log.Println("Connected to server")
 			go func() {
 				t.Client.AnnounceHere(t.SessionID())
-				for i := 0; i < 5; i++ {
-					if root, err := t.histState.Root(); err == nil {
-						t.Client.Reply(root, "[join]")
-						return
-					}
-					time.Sleep(5 * time.Second)
-				}
-				log.Println("Gave up greeting server")
+				t.Client.AskWho()
 			}()
 			break
 		}
@@ -136,17 +132,21 @@ func (t *TUI) AwaitExit() {
 
 // update listens for new messages to display and redraws the screen.
 func (t *TUI) update() {
-	for message := range t.messages {
-		// can't do this inside the loop or it will bind the wrong value of
-		// `message` and will be prone to race conditions on whether the
-		// `New()` method is invoked before the value of `message` is
-		// reassigned.
-		err := t.histState.New(message)
-		if err != nil {
-			log.Println(err)
+	ticker := time.NewTicker(updateInterval)
+	for {
+		select {
+		case message := <-t.messages:
+			err := t.histState.New(message)
+			if err != nil {
+				log.Println(err)
+			}
+			t.reRender()
+		case <-ticker.C:
+			// redraw
+			t.Update(func(*gocui.Gui) error { return nil })
+		case <-t.done:
+			return
 		}
-
-		t.reRender()
 	}
 }
 
@@ -159,12 +159,6 @@ func (t *TUI) Display(message *arbor.ChatMessage) {
 // a keystroke or mouse input handler.
 func (t *TUI) quit(c *gocui.Gui, v *gocui.View) error {
 	t.Client.AnnounceLeaving(t.SessionID())
-	if root, err := t.histState.Root(); err != nil {
-		log.Println("Not notifying that we quit:", err)
-	} else {
-		t.Client.Reply(root, "[quit]")
-		time.Sleep(time.Millisecond * 250) // wait in the hope that Quit will be sent
-	}
 	return gocui.ErrQuit
 }
 
@@ -347,6 +341,24 @@ func (t *TUI) sendReply(c *gocui.Gui, v *gocui.View) error {
 	return t.historyMode()
 }
 
+// toggleUserList toggles the visibility of the list of online users
+func (t *TUI) toggleUserList(c *gocui.Gui, v *gocui.View) error {
+	x, y, _, _, err := c.ViewPosition(userListView)
+	if err != nil {
+		return errors.Wrapf(err, "toggleUserList view position")
+	}
+	topView, err := c.ViewByPosition(x+1, y+1)
+	if err != nil {
+		return errors.Wrapf(err, "toggleUserList view by position")
+	}
+	if topView.Name() == userListView {
+		_, err = c.SetViewOnBottom(userListView)
+		return errors.Wrapf(err, "toggleUserList set on bottom")
+	}
+	_, err = c.SetViewOnTop(userListView)
+	return errors.Wrapf(err, "toggleUserList set on top")
+}
+
 // layout places views in the UI.
 func (t *TUI) layout(gui *gocui.Gui) error {
 	mX, mY := gui.Size()
@@ -358,6 +370,29 @@ func (t *TUI) layout(gui *gocui.Gui) error {
 		t.reRender()
 	}
 	t.lastKnownWidth = mX
+	// create a hidden-by-default user list view
+	userList, err := gui.SetView(userListView, 0, 0, histMaxX, (histMaxY/2)+1)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		userList.Title = "Online users"
+		userList.Wrap = true
+		gui.SetViewOnBottom(userListView)
+		log.Printf("%v", userList)
+	}
+	// repopulate the user list
+	sessions := t.Client.ActiveSessions()
+	userText := ""
+	for user, lastSeen := range sessions {
+		since := time.Since(lastSeen)
+		userText += fmt.Sprintf("%s seen %02dm%02ds ago\n", user, int(since.Minutes()), int(since.Seconds()))
+	}
+	userList.Clear()
+	_, err = userList.Write([]byte(userText))
+	if err != nil {
+		log.Println("error writing user list", err)
+	}
 	// update view dimensions or create for the first time
 	histView, err := gui.SetView(historyView, 0, 0, histMaxX, histMaxY)
 	if err != nil {

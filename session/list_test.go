@@ -93,16 +93,18 @@ func TestActiveMultiSessions(t *testing.T) {
 	g := gomega.NewGomegaWithT(t)
 	list := session.NewList()
 	secondName := sessionName + "-second"
-	_ = list.Track(username, session.Session{sessionName, time.Now().Add(-1 * time.Second)})
-	_ = list.Track(username, session.Session{secondName, time.Now()})
+	firstSession := session.Session{sessionName, time.Now().Add(-1 * time.Second)}
+	secondSession := session.Session{secondName, time.Now()}
+	_ = list.Track(username, firstSession)
+	_ = list.Track(username, secondSession)
 	// multiple sessions for the same user should still result in a single result
 	active := list.ActiveSessions()
 	g.Expect(active).ToNot(gomega.BeNil())
 	g.Expect(len(active)).To(gomega.BeEquivalentTo(1))
 	// the more recently-added session should come out
-	for username, session := range active {
+	for username, lastSeen := range active {
 		g.Expect(username).To(gomega.BeEquivalentTo(username))
-		g.Expect(session.ID).To(gomega.BeEquivalentTo(secondName))
+		g.Expect(lastSeen).To(gomega.BeEquivalentTo(secondSession.LastSeen))
 	}
 }
 
@@ -125,4 +127,17 @@ func TestActiveMultiUserSessions(t *testing.T) {
 	}
 	g.Expect(usernames).To(gomega.ContainElement(username))
 	g.Expect(usernames).To(gomega.ContainElement(secondUser))
+}
+
+// TestActiveSessionsEmpty ensures that ActiveSessions behaves correctly
+// when there are no known sessions
+func TestActiveSessionsEmpty(t *testing.T) {
+	g := gomega.NewGomegaWithT(t)
+	list := session.NewList()
+	sessions := list.ActiveSessions()
+	g.Expect(sessions).To(gomega.BeEmpty())
+	list.Track("foo", session.Session{"bar", time.Now()})
+	list.Remove("foo", "bar")
+	sessions = list.ActiveSessions()
+	g.Expect(sessions).To(gomega.BeEmpty())
 }

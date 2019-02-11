@@ -67,7 +67,10 @@ func (l *List) Remove(username, sessID string) error {
 		if exists {
 			// delete the session if we found it
 			delete(userSessions, sessID)
-			// TODO: delete the whole map for the user if this was their only session
+			// delete the whole map for the user if this was their only session
+			if len(l.Active[username]) == 0 {
+				delete(l.Active, username)
+			}
 			return nil
 		}
 		// we were asked to delete a nonexistent session
@@ -79,8 +82,8 @@ func (l *List) Remove(username, sessID string) error {
 
 // ActiveSessions returns a map from usernames to the most active session
 // for each user.
-func (l *List) ActiveSessions() map[string]*Session {
-	activeMap := make(map[string]*Session)
+func (l *List) ActiveSessions() map[string]time.Time {
+	activeMap := make(map[string]time.Time)
 	for user, sessionMap := range l.Active {
 		// make a list of all sessions for the user
 		sessions := make([]*Session, 0, len(sessionMap))
@@ -95,7 +98,7 @@ func (l *List) ActiveSessions() map[string]*Session {
 			return sessions[i].LastSeen.After(sessions[j].LastSeen)
 		})
 		// chose the first session (the most recently updated)
-		activeMap[user] = sessions[0]
+		activeMap[user] = sessions[0].LastSeen
 	}
 	return activeMap
 }
