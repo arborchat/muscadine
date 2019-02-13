@@ -72,6 +72,7 @@ The keybindings are:
     - home/g - jump to top of history
     - end/G - jump to bottom of history
     - q - query the server for any missing chat history (only necessary if top status bar indicates)
+    - w - toggle the list of active users (covers part of history)
 - Compose Mode:
     - enter - send your message (unless in paste mode)
     - ctrl+p - toggle "paste mode", in which the enter key will *not* send the message, but instead type a newline
