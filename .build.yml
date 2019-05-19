@@ -3,16 +3,7 @@ packages:
     - go
 sources:
     - 'https://github.com/arborchat/muscadine/'
-environment:
-    GOPATH: "$HOME/go"
-    PATH: "$PATH:$GOPATH/bin"
 tasks:
-    - dependencies: |
-        mkdir -p "$GOPATH/bin"
-        curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-        mkdir -p "$GOPATH/src/github.com/arborchat" && mv muscadine "$GOPATH/src/github.com/arborchat"
-        cd "$GOPATH/src/github.com/arborchat/muscadine"
-        dep ensure
     - test: |
-        cd "$GOPATH/src/github.com/arborchat/muscadine"
+        cd muscadine
         go test -v -cover ./...
