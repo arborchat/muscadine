@@ -3,6 +3,8 @@ packages:
     - go
 sources:
     - 'https://github.com/arborchat/muscadine/'
+environment:
+    GO111MODULE: "on"
 tasks:
     - test: |
         cd muscadine
