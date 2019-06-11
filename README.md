@@ -2,6 +2,8 @@
 
 Muscadine is the reference client for the [Arbor chat protocol](https://github.com/arborchat/protocol).
 
+You can get information about the Arbor project [here](https://man.sr.ht/~whereswaldon/arborchat/)
+
 **DISCLAIMER**: Arbor currently doesn't use any encryption whatsoever. We are working to change that, but
 right now anything sent over the system can be recorded or modified by malicious third parties. DO NOT
 send anything sensitive over Arbor, and DO NOT put a great deal of faith in the integrity of messages
