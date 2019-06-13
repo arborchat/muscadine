@@ -1,8 +1,8 @@
 language: go
+go:
+    - 1.11.x
+    - 1.12.x
 dist: xenial
-install:
-    - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-    - dep ensure
 script:
     - go test -v -cover ./...
     - for os in linux darwin windows openbsd; do echo "building for $os" && env GOOS="$os" go build -o /dev/null; done

@@ -9,7 +9,6 @@ cd "$script_dir" || exit 1
 
 commit="$(git rev-parse HEAD)"
 suffix=""
-version_file="$(pwd)/version.go"
 
 # check if git is clean. If not, notify user and taint the build
 if ! git diff --exit-code > /dev/null 2>&1 ||\
@@ -20,14 +19,4 @@ Building a \"modified\" binary
 Run 'git diff && git diff --cached' to see your unmodified changes"
 fi
 
-# write the file and format it
-echo "package main; const Version = \"$commit$suffix\"" > "$version_file"
-gofmt -s -w "$version_file"
-
-# show the user
-echo "Wrote file $version_file"
-
-# ensure dependencies are clean
-dep ensure
-
-go build "$@"
+go build -ldflags "-X main.Version=$commit$suffix" $@
